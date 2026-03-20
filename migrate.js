@@ -60,6 +60,32 @@ async function migrate() {
     console.log(`[migrate] applied: ${folder}`)
   }
 
+  // Seed default weights if table is empty
+  const existing = await client.execute('SELECT COUNT(*) as count FROM ThreatWeight')
+  const count = Number(existing.rows[0][0])
+  if (count === 0) {
+    console.log('[migrate] seeding default weights...')
+    const defaults = [
+      ['Security Controls & Threat Mitigations', 0.20],
+      ['Human Oversight & Control',              0.18],
+      ['Identity, Access & Privilege',           0.16],
+      ['Governance, Risk & Policy',              0.14],
+      ['AI Model & Training Provenance',         0.12],
+      ['Monitoring, Logging & Observability',    0.10],
+      ['Data Governance & Privacy',              0.06],
+      ['System Architecture & Design',           0.04],
+    ]
+    for (const [domain, weight] of defaults) {
+      const id = crypto.randomUUID()
+      await client.execute({
+        sql: `INSERT INTO ThreatWeight (id, domain, weight, score, source, updatedAt)
+              VALUES (?, ?, ?, 0, 'default', datetime('now'))`,
+        args: [id, domain, weight],
+      })
+    }
+    console.log('[migrate] default weights seeded')
+  }
+
   await client.close()
   console.log('[migrate] done')
 }
