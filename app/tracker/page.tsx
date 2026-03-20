@@ -1,0 +1,297 @@
+'use client'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { EVIDENCE, DOMAINS, FRAMEWORKS, DOMAIN_COLORS, FRAMEWORK_COLORS } from '@/lib/evidence-data'
+import { useQuery } from '@tanstack/react-query'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Save, Calculator } from 'lucide-react'
+
+type StatusType = 'Compliant' | 'Partial' | 'Non-Compliant' | 'N/A' | ''
+type ResponseMap = Record<string, { status: StatusType; notes: string }>
+
+const STATUS_OPTIONS: StatusType[] = ['Compliant', 'Partial', 'Non-Compliant', 'N/A']
+const STATUS_COLORS: Record<string, string> = {
+  'Compliant': 'text-green-400',
+  'Partial': 'text-amber-400',
+  'Non-Compliant': 'text-red-400',
+  'N/A': 'text-slate-500',
+}
+
+function TrackerContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const assessmentId = searchParams.get('assessmentId')
+
+  const [assessmentName, setAssessmentName] = useState('')
+  const [systemName, setSystemName] = useState('')
+  const [notes, setNotes] = useState('')
+  const [responses, setResponses] = useState<ResponseMap>({})
+  const [filterDomain, setFilterDomain] = useState('')
+  const [filterFramework, setFilterFramework] = useState('')
+  const [search, setSearch] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const { data: weights } = useQuery({
+    queryKey: ['weights'],
+    queryFn: () => fetch('/api/weights').then(r => r.json()),
+  })
+
+  const { data: existing } = useQuery({
+    queryKey: ['assessment', assessmentId],
+    queryFn: () => assessmentId ? fetch(`/api/assessments/${assessmentId}`).then(r => r.json()) : null,
+    enabled: !!assessmentId,
+  })
+
+  useEffect(() => {
+    if (existing) {
+      setAssessmentName(existing.name)
+      setSystemName(existing.systemName)
+      setNotes(existing.notes ?? '')
+      const map: ResponseMap = {}
+      for (const r of existing.responses) {
+        map[r.evidenceId] = { status: r.status, notes: r.notes ?? '' }
+      }
+      setResponses(map)
+    }
+  }, [existing])
+
+  // Restore from localStorage
+  useEffect(() => {
+    if (!assessmentId) {
+      const saved = localStorage.getItem('tracker-draft')
+      if (saved) {
+        try {
+          const d = JSON.parse(saved)
+          setAssessmentName(d.assessmentName ?? '')
+          setSystemName(d.systemName ?? '')
+          setNotes(d.notes ?? '')
+          setResponses(d.responses ?? {})
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+  }, [assessmentId])
+
+  const saveDraft = useCallback((r: ResponseMap, n: string, s: string, no: string) => {
+    if (!assessmentId) {
+      localStorage.setItem('tracker-draft', JSON.stringify({ assessmentName: n, systemName: s, notes: no, responses: r }))
+    }
+  }, [assessmentId])
+
+  const setResponse = (id: string, field: 'status' | 'notes', value: string) => {
+    setResponses(prev => {
+      const updated = { ...prev, [id]: { ...prev[id], [field]: value } }
+      saveDraft(updated, assessmentName, systemName, notes)
+      return updated
+    })
+  }
+
+  const weightMap: Record<string, number> = weights
+    ? Object.fromEntries(weights.map((w: { domain: string; weight: number }) => [w.domain, w.weight]))
+    : {}
+
+  const filteredEvidence = EVIDENCE.filter(e => {
+    if (filterDomain && e.domain !== filterDomain) return false
+    if (filterFramework && !e.frameworks.includes(filterFramework)) return false
+    if (search && !e.aspect.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
+  const ratedCount = EVIDENCE.filter(e => responses[e.id]?.status).length
+  const progressPct = Math.round((ratedCount / EVIDENCE.length) * 100)
+
+  const buildPayload = () => ({
+    name: assessmentName || 'Unnamed Assessment',
+    systemName: systemName || 'Unknown System',
+    notes,
+    responses: Object.entries(responses)
+      .filter(([, v]) => v.status)
+      .map(([evidenceId, v]) => ({ evidenceId, status: v.status, notes: v.notes })),
+  })
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      if (assessmentId) {
+        await fetch(`/api/assessments/${assessmentId}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload()),
+        })
+      } else {
+        await fetch('/api/assessments', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload()),
+        })
+        localStorage.removeItem('tracker-draft')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCalculate = async () => {
+    setSaving(true)
+    try {
+      let id = assessmentId
+      if (id) {
+        await fetch(`/api/assessments/${id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload()),
+        })
+      } else {
+        const res = await fetch('/api/assessments', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload()),
+        })
+        const data = await res.json()
+        id = data.id
+        localStorage.removeItem('tracker-draft')
+      }
+      router.push(`/scores?id=${id}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{assessmentId ? 'Edit Assessment' : 'New Assessment'}</h1>
+          <p className="text-slate-400 mt-1">Rate {EVIDENCE.length} evidence items across 10 frameworks</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={handleSave} disabled={saving} variant="outline" className="border-slate-700">
+            <Save className="h-4 w-4 mr-2" /> Save
+          </Button>
+          <Button onClick={handleCalculate} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
+            <Calculator className="h-4 w-4 mr-2" /> Calculate Scores
+          </Button>
+        </div>
+      </div>
+
+      {/* Assessment metadata */}
+      <Card className="bg-slate-900 border-slate-800">
+        <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-slate-400 mb-1 block">Assessment Name</label>
+            <Input value={assessmentName} onChange={e => { setAssessmentName(e.target.value); saveDraft(responses, e.target.value, systemName, notes) }}
+              placeholder="e.g. Q1 2026 Review" className="bg-slate-800 border-slate-700" />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 mb-1 block">System Name</label>
+            <Input value={systemName} onChange={e => { setSystemName(e.target.value); saveDraft(responses, assessmentName, e.target.value, notes) }}
+              placeholder="e.g. AISPM Platform" className="bg-slate-800 border-slate-700" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm text-slate-400 mb-1 block">Notes</label>
+            <Textarea value={notes} onChange={e => { setNotes(e.target.value); saveDraft(responses, assessmentName, systemName, e.target.value) }}
+              placeholder="Assessment context, scope, assumptions..." className="bg-slate-800 border-slate-700 resize-none" rows={2} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Progress */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-sm text-slate-400">
+          <span>Progress</span><span>{ratedCount} / {EVIDENCE.length} items rated ({progressPct}%)</span>
+        </div>
+        <Progress value={progressPct} className="h-2" />
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <select value={filterDomain} onChange={e => setFilterDomain(e.target.value)}
+          className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-300">
+          <option value="">All Domains</option>
+          {DOMAINS.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={filterFramework} onChange={e => setFilterFramework(e.target.value)}
+          className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-300">
+          <option value="">All Frameworks</option>
+          {FRAMEWORKS.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+        <Input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search evidence items..." className="bg-slate-800 border-slate-700 max-w-xs text-sm" />
+      </div>
+
+      {/* Evidence table */}
+      <Card className="bg-slate-900 border-slate-800">
+        <CardHeader><CardTitle className="text-sm text-slate-400">{filteredEvidence.length} items shown</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400">
+                  <th className="text-left py-3 px-4 min-w-[160px]">Domain</th>
+                  <th className="text-left py-3 px-4 w-16">Weight</th>
+                  <th className="text-left py-3 px-4 min-w-[180px]">Frameworks</th>
+                  <th className="text-left py-3 px-4">Evidence Item</th>
+                  <th className="text-left py-3 px-4 w-44">Status</th>
+                  <th className="text-left py-3 px-4 min-w-[160px]">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEvidence.map((item, i) => (
+                  <tr key={item.id} className={`border-b border-slate-800/50 hover:bg-slate-800/30 ${i % 2 === 0 ? '' : 'bg-slate-900/30'}`}>
+                    <td className="py-3 px-4">
+                      <Badge className="text-xs border-0 whitespace-nowrap" style={{ backgroundColor: `${DOMAIN_COLORS[item.domain]}20`, color: DOMAIN_COLORS[item.domain] }}>
+                        {item.domain}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 text-slate-400 text-xs">
+                      {weightMap[item.domain] ? `${Math.round(weightMap[item.domain] * 100)}%` : '—'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex flex-wrap gap-1">
+                        {item.frameworks.map(fw => (
+                          <span key={fw} className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: `${FRAMEWORK_COLORS[fw]}20`, color: FRAMEWORK_COLORS[fw] }}>
+                            {fw}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-300">{item.aspect}</td>
+                    <td className="py-3 px-4">
+                      <select
+                        value={responses[item.id]?.status ?? ''}
+                        onChange={e => setResponse(item.id, 'status', e.target.value)}
+                        className={`bg-slate-800 border border-slate-700 rounded-md px-2 py-1.5 text-xs w-full ${STATUS_COLORS[responses[item.id]?.status ?? ''] ?? 'text-slate-400'}`}
+                      >
+                        <option value="">— Select —</option>
+                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Input
+                        value={responses[item.id]?.notes ?? ''}
+                        onChange={e => setResponse(item.id, 'notes', e.target.value)}
+                        placeholder="Notes..."
+                        className="bg-slate-800 border-slate-700 text-xs h-8"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+export default function TrackerPage() {
+  return (
+    <Suspense fallback={<div className="space-y-4">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}>
+      <TrackerContent />
+    </Suspense>
+  )
+}

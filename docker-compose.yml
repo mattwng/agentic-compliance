@@ -1,0 +1,15 @@
+services:
+  agentic-compliance:
+    build: .
+    container_name: agentic-compliance
+    restart: unless-stopped
+    ports:
+      - "3005:3000"
+    volumes:
+      - compliance_db:/app/data
+    environment:
+      - DATABASE_URL=file:/app/data/compliance.db
+      - NODE_ENV=production
+
+volumes:
+  compliance_db:

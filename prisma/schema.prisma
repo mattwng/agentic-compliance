@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Assessment {
+  id          String     @id @default(cuid())
+  name        String
+  date        DateTime   @default(now())
+  systemName  String
+  notes       String?
+  responses   Response[]
+  createdAt   DateTime   @default(now())
+}
+
+model Response {
+  id           String     @id @default(cuid())
+  assessmentId String
+  evidenceId   String
+  status       String
+  notes        String?
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+}
+
+model ThreatWeight {
+  id        String   @id @default(cuid())
+  domain    String   @unique
+  weight    Float
+  score     Float
+  source    String
+  updatedAt DateTime @updatedAt
+}
