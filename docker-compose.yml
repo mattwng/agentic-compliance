@@ -10,6 +10,8 @@ services:
     environment:
       - DATABASE_URL=file:/app/data/compliance.db
       - NODE_ENV=production
+      - BASIC_AUTH_USER=demo
+      - BASIC_AUTH_PASS=illuminate2026
 
 volumes:
   compliance_db:
