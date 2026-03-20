@@ -10,6 +10,7 @@ const links = [
   { href: '/matrix', label: 'Evidence Matrix' },
   { href: '/tracker', label: 'Assessment Tracker' },
   { href: '/threats', label: 'Threat Intelligence' },
+  { href: '/topology', label: 'AI Topology' },
   { href: '/scores', label: 'Risk Scores' },
 ]
 
