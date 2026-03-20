@@ -7,9 +7,9 @@ export const DOMAIN_THREAT_TAGS: Record<string, string[]> = {
   'AI Model & Training Provenance':         ['data-poisoning', 'supply-chain', 'model-weights', 'ip-theft', 'ml', 'nation-state', 'espionage', 'llm'],
   'Security Controls & Threat Mitigations': ['prompt-injection', 'llm', 'ai-attack', 'atlas', 'mitre', 'cve', 'exploited', 'recon', 'exploitation', 'phishing', 'social-engineering', 'deepfake', 'bec'],
   'Human Oversight & Control':              ['autonomous-agents', 'agentic-ai', 'ai-incident', 'safety'],
-  'Governance, Risk & Compliance':          ['annual-report', 'nation-state', 'espionage', 'ip-theft'],
-  'Monitoring & Audit':                     ['ai-incident', 'aiid', 'agentic-ai'],
-  'Data Protection & Privacy':              ['ip-theft', 'data-poisoning', 'espionage'],
+  'Governance, Risk & Policy':              ['annual-report', 'nation-state', 'espionage', 'ip-theft'],
+  'Monitoring, Logging & Observability':    ['ai-incident', 'aiid', 'agentic-ai'],
+  'Data Governance & Privacy':              ['ip-theft', 'data-poisoning', 'espionage'],
 }
 
 export function buildGappedDomains(
