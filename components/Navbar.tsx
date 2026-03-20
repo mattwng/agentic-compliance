@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Shield, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
@@ -30,7 +30,13 @@ export default function Navbar() {
     <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
       <div className="container mx-auto px-4 max-w-[1400px] flex items-center justify-between h-16">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg text-slate-100">
-          <Shield className="h-6 w-6 text-indigo-400" />
+          <div className="h-7 w-7 overflow-hidden flex-shrink-0">
+            <img
+              src="/illuminait-logo.png"
+              alt="IlluminAIT"
+              style={{ width: '100%', height: '133%', objectFit: 'cover', objectPosition: 'top', filter: 'invert(1)' }}
+            />
+          </div>
           <span className="hidden sm:block">Agentic AI Compliance</span>
         </Link>
         {/* Desktop */}
