@@ -1,0 +1,157 @@
+{
+  "assessment_name": "AI Sales Assistant — Phase 1: AI Topology Scan",
+  "system_name": "AI Sales Assistant",
+  "notes": "Automated graph traversal scan completed 2026-03-18. Runtime topology mapped 47 nodes across 3 agent clusters. Phase 1 covers controls with topology auto or signal confidence. 8 controls with cloudApiTier=manual are excluded from automated workflow — add manually for full audit.",
+  "responses": [
+    {
+      "evidence_id": "arch-02",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed single orchestrator + 3 sub-agents via runtime graph traversal. Node ID: topology://agents/orchestrator-sales-v2. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "arch-03",
+      "status": "Compliant",
+      "notes": "Topology scan enumerated 12 tool edges: CRM API, calendar, email, document store, vector DB, 7 internal microservices. Node IDs: topology://tools/crm-connector, topology://tools/calendar-api. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "arch-04",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed short-term context window (128k tokens) + persistent vector store (Pinecone, us-east-1). Node ID: topology://memory/vector-store-01. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "arch-05",
+      "status": "Compliant",
+      "notes": "Topology scan detected inter-agent message bus with TLS 1.3 enforcement across all edges. Trust boundary: internal only. Node IDs: topology://boundary/trust-zone-internal. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "arch-06",
+      "status": "Partial",
+      "notes": "Topology scan detected 4 third-party SDK nodes (LangChain, OpenAI SDK, Pinecone SDK, Twilio). Full supply chain provenance requires Cloud API scan to confirm version pinning and SBOMs."
+    },
+    {
+      "evidence_id": "iam-01",
+      "status": "Partial",
+      "notes": "Topology scan detected agent identity tokens on all 3 sub-agent nodes. Full IAM role bindings and credential rotation policy require Cloud API scan for confirmation."
+    },
+    {
+      "evidence_id": "iam-03",
+      "status": "Partial",
+      "notes": "Topology scan detected permission scopes on 11 of 12 tool edges. Least-privilege verification requires Cloud API IAM policy enumeration."
+    },
+    {
+      "evidence_id": "iam-05",
+      "status": "Partial",
+      "notes": "Topology scan detected secrets injected at 4 tool nodes via environment references. Rotation policy and storage backend (Secrets Manager vs. env vars) require Cloud API scan."
+    },
+    {
+      "evidence_id": "model-01",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed model node: gpt-4o (OpenAI API). Model card publicly available at platform.openai.com/docs/models/gpt-4o. Node ID: topology://models/gpt4o-prod. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "model-03",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed base model only (no fine-tuning nodes detected). No RLHF adapters in graph. Node ID: topology://models/gpt4o-prod. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "model-04",
+      "status": "Partial",
+      "notes": "Topology scan detected model version pinned to gpt-4o-2024-08-06 in config node. Full change control records require Cloud API scan of deployment pipeline."
+    },
+    {
+      "evidence_id": "model-06",
+      "status": "Partial",
+      "notes": "Topology scan detected API key auth on model node. Role-based access controls and key rotation schedule require Cloud API scan."
+    },
+    {
+      "evidence_id": "sec-01",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed system prompt isolation node and input sanitization middleware on orchestrator ingress edge. Node ID: topology://controls/prompt-guard-v1. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "sec-02",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed output validation node (grounding check + PII filter) on all agent egress edges. Node ID: topology://controls/output-validator. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "sec-06",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed tool output validation node on all 12 tool return edges. Schema enforcement detected on CRM, calendar, and email connectors. Node ID: topology://controls/tool-validator. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "sec-03",
+      "status": "Partial",
+      "notes": "Topology scan detected container node boundaries around each agent. Microsegmentation and network policy details require Cloud API scan."
+    },
+    {
+      "evidence_id": "sec-04",
+      "status": "Partial",
+      "notes": "Topology scan detected VPC boundary node for agent cluster. Specific security group rules and microsegmentation policies require Cloud API scan."
+    },
+    {
+      "evidence_id": "sec-07",
+      "status": "Partial",
+      "notes": "Topology scan detected data scope tags on 8 of 12 tool edges. Full data access policy and DLP controls require Cloud API scan."
+    },
+    {
+      "evidence_id": "human-01",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed HITL checkpoint node on high-risk action edges (email send, CRM update, deal close). Approval gate detected. Node ID: topology://controls/hitl-gate-v2. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "human-03",
+      "status": "Compliant",
+      "notes": "Topology scan confirmed action scope limiter node with 5 defined guardrail edges (no contract signing, no financial commitments >$10k, no external API calls without approval). Node ID: topology://controls/scope-limiter. Scan: 2026-03-18T09:14:22Z"
+    },
+    {
+      "evidence_id": "human-02",
+      "status": "Partial",
+      "notes": "Topology scan detected kill-switch signal path in orchestrator control plane. Full override mechanism and rollback capability require Cloud API scan of deployment controls."
+    },
+    {
+      "evidence_id": "human-05",
+      "status": "Partial",
+      "notes": "Topology scan detected escalation routing node. Destination queues and escalation SLA configuration require Cloud API scan."
+    },
+    {
+      "evidence_id": "mon-01",
+      "status": "Partial",
+      "notes": "Topology scan detected logging node attached to orchestrator and sub-agent edges. Log destination and retention policy require Cloud API scan."
+    },
+    {
+      "evidence_id": "mon-03",
+      "status": "Partial",
+      "notes": "Topology scan detected anomaly detection node in monitoring cluster. Baseline thresholds and alert routing require Cloud API scan."
+    },
+    {
+      "evidence_id": "mon-05",
+      "status": "Partial",
+      "notes": "Topology scan detected trace ID propagation on all agent-to-agent edges. Full explainability output format and storage require Cloud API scan."
+    },
+    {
+      "evidence_id": "mon-06",
+      "status": "Partial",
+      "notes": "Topology scan detected SIEM forwarder node in logging cluster. Specific SIEM platform and event schema require Cloud API scan."
+    },
+    {
+      "evidence_id": "data-02",
+      "status": "Partial",
+      "notes": "Topology scan detected data scope annotations on tool edges. Full data minimization policy enforcement requires Cloud API scan of IAM data policies."
+    },
+    {
+      "evidence_id": "data-05",
+      "status": "Partial",
+      "notes": "Topology scan detected cross-region data edge between us-east-1 and eu-west-1 nodes. Transfer control policy requires Cloud API scan."
+    },
+    {
+      "evidence_id": "model-02",
+      "status": "Partial",
+      "notes": "Topology scan detected model provenance metadata node referencing OpenAI training data card. Full data lineage and licensing verification require Cloud API scan."
+    },
+    {
+      "evidence_id": "gov-05",
+      "status": "Partial",
+      "notes": "Topology scan detected 4 third-party vendor nodes. Full vendor risk assessment documentation requires Cloud API scan of vendor configurations and contracts."
+    }
+  ]
+}

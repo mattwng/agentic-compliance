@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { EVIDENCE, DOMAINS, FRAMEWORKS, DOMAIN_COLORS, FRAMEWORK_COLORS } from '@/lib/evidence-data'
+import { EVIDENCE, DOMAINS, FRAMEWORKS, DOMAIN_COLORS, FRAMEWORK_COLORS, CLOUD_API_TIER_LABELS, TOPOLOGY_TIER_LABELS } from '@/lib/evidence-data'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,9 +10,35 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Save, Calculator, FileUp, CheckCircle, X, Download } from 'lucide-react'
+import { Save, Calculator, FileUp, CheckCircle, X, Download, Info } from 'lucide-react'
+import type { EvidenceItem } from '@/lib/evidence-data'
 
 type StatusType = 'Compliant' | 'Partial' | 'Non-Compliant' | 'N/A' | ''
+type SourceFilter = 'all' | 'cloud-api' | 'topology' | 'manual'
+
+function matchesSourceFilter(item: EvidenceItem, filter: SourceFilter): boolean {
+  if (filter === 'all') return true
+  if (filter === 'cloud-api') return item.cloudApiTier === 'auto' || item.cloudApiTier === 'signal'
+  if (filter === 'topology') return item.topologyTier === 'auto' || item.topologyTier === 'signal'
+  if (filter === 'manual') return item.cloudApiTier === 'manual'
+  return true
+}
+
+function cloudApiChipClass(tier: string): string {
+  const base = 'text-[10px] px-1.5 py-0.5 rounded font-medium'
+  if (tier === 'auto') return `${base} bg-teal-900/60 text-teal-300 border border-teal-700`
+  if (tier === 'signal') return `${base} text-teal-500 border border-teal-700`
+  // manual
+  return `${base} bg-amber-900/40 text-amber-400 border border-amber-700/50`
+}
+
+function topologyChipClass(tier: string): string {
+  const base = 'text-[10px] px-1.5 py-0.5 rounded font-medium'
+  if (tier === 'auto') return `${base} bg-violet-900/60 text-violet-300 border border-violet-700`
+  if (tier === 'signal') return `${base} text-violet-400 border border-violet-700`
+  // limited
+  return `${base} text-slate-500 border border-slate-700`
+}
 type ResponseMap = Record<string, { status: StatusType; notes: string }>
 
 const STATUS_OPTIONS: StatusType[] = ['Compliant', 'Partial', 'Non-Compliant', 'N/A']
@@ -34,6 +60,8 @@ function TrackerContent() {
   const [responses, setResponses] = useState<ResponseMap>({})
   const [filterDomain, setFilterDomain] = useState('')
   const [filterFramework, setFilterFramework] = useState('')
+  const [filterSource, setFilterSource] = useState<SourceFilter>('all')
+  const [showPhaseInfo, setShowPhaseInfo] = useState(false)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [importStatus, setImportStatus] = useState<{ count: number; filename: string } | null>(null)
@@ -99,7 +127,16 @@ function TrackerContent() {
     ? Object.fromEntries(weights.map((w: { domain: string; weight: number }) => [w.domain, w.weight]))
     : {}
 
+  const manualCount = EVIDENCE.filter(e => e.cloudApiTier === 'manual').length
+  const sourceCounts = {
+    all: EVIDENCE.length,
+    'cloud-api': EVIDENCE.filter(e => matchesSourceFilter(e, 'cloud-api')).length,
+    topology: EVIDENCE.filter(e => matchesSourceFilter(e, 'topology')).length,
+    manual: manualCount,
+  }
+
   const filteredEvidence = EVIDENCE.filter(e => {
+    if (!matchesSourceFilter(e, filterSource)) return false
     if (filterDomain && e.domain !== filterDomain) return false
     if (filterFramework && !e.frameworks.includes(filterFramework)) return false
     if (search && !e.aspect.toLowerCase().includes(search.toLowerCase())) return false
@@ -292,6 +329,64 @@ function TrackerContent() {
         <Progress value={progressPct} className="h-2" />
       </div>
 
+      {/* Discovery phase info callout */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60">
+        <button
+          onClick={() => setShowPhaseInfo(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm text-slate-400 hover:text-slate-200"
+        >
+          <span className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-indigo-400" />
+            <span className="font-medium text-slate-300">Discovery Phases</span>
+            <span className="text-slate-500">— automated workflow covers 40 of 48 controls; 8 require manual input</span>
+          </span>
+          <span className="text-slate-600">{showPhaseInfo ? '▲' : '▼'}</span>
+        </button>
+        {showPhaseInfo && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-slate-800 divide-y md:divide-y-0 md:divide-x divide-slate-800">
+            <div className="px-4 py-3">
+              <p className="text-xs font-semibold text-violet-400 mb-1">Phase 1 — AI Topology Scan</p>
+              <p className="text-xs text-slate-400">Graph traversal maps agent nodes, tool edges, and runtime trust boundaries. Covers <span className="text-violet-300 font-medium">{sourceCounts.topology} controls</span> with auto or signal confidence.</p>
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-xs font-semibold text-teal-400 mb-1">Phase 2 — Cloud Infrastructure API Scan</p>
+              <p className="text-xs text-slate-400">Cloud provider APIs enumerate IAM roles, secrets, network policies, and logging config. Covers <span className="text-teal-300 font-medium">{sourceCounts['cloud-api']} controls</span> with auto or signal confidence.</p>
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-xs font-semibold text-amber-400 mb-1">Manual Input — Optional Enrichment</p>
+              <p className="text-xs text-slate-400"><span className="text-amber-300 font-medium">{sourceCounts.manual} controls</span> require human-authored documentation (governance docs, red-team results, conformity assessments). Not required to score — add separately for a full audit.</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Source filter tabs */}
+      <div className="flex flex-wrap gap-1.5">
+        {([
+          { key: 'all',       label: `All (${sourceCounts.all})` },
+          { key: 'cloud-api', label: `☁ Cloud API (${sourceCounts['cloud-api']})` },
+          { key: 'topology',  label: `⬡ AI Topology (${sourceCounts.topology})` },
+          { key: 'manual',    label: `✎ Manual Input (${sourceCounts.manual})` },
+        ] as const).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setFilterSource(key)}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              filterSource === key
+                ? 'bg-indigo-600 text-white'
+                : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-slate-300'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        {filterSource === 'manual' && (
+          <span className="ml-1 flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-amber-900/30 text-amber-400 border border-amber-700/50">
+            ⚑ Required for full compliance audit
+          </span>
+        )}
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <select value={filterDomain} onChange={e => setFilterDomain(e.target.value)}
@@ -344,7 +439,18 @@ function TrackerContent() {
                         ))}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-300">{item.aspect}</td>
+                    <td className="py-3 px-4">
+                      <div className="text-slate-300 text-sm leading-snug">{item.aspect}</div>
+                      <div className="flex flex-wrap gap-1 mt-1.5 items-center">
+                        <span className={cloudApiChipClass(item.cloudApiTier)}>{CLOUD_API_TIER_LABELS[item.cloudApiTier]}</span>
+                        <span className={topologyChipClass(item.topologyTier)}>{TOPOLOGY_TIER_LABELS[item.topologyTier]}</span>
+                        {item.cloudApiTier === 'manual' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-900/30 text-amber-400 border border-amber-700/50">
+                            ⚑ Manual input required for full audit
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="py-3 px-4">
                       <select
                         value={responses[item.id]?.status ?? ''}

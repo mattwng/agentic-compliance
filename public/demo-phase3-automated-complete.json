@@ -1,0 +1,207 @@
+{
+  "assessment_name": "AI Sales Assistant — Phase 3: Automated Complete Assessment",
+  "system_name": "AI Sales Assistant",
+  "notes": "Full automated assessment combining Phase 1 topology scan (2026-03-18) and Phase 2 Cloud API scan (2026-03-19). Covers all 40 controls discoverable without manual input. Fully scoreable. 8 controls (arch-01, gov-01, gov-02, gov-03, gov-04, gov-06, model-05, sec-05) require manual documentation for a complete compliance audit — use the Manual Input filter tab in the tracker to address them separately.",
+  "responses": [
+    {
+      "evidence_id": "arch-02",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: ECS DescribeServices + topology graph confirmed 4-agent architecture. Task ARN: arn:aws:ecs:us-east-1:123456789012:service/ai-sales-cluster/orchestrator-svc. Node ID: topology://agents/orchestrator-sales-v2."
+    },
+    {
+      "evidence_id": "arch-03",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: 12 tool endpoints enumerated via API Gateway ListResources + topology edge scan. All routes IAM-authenticated. API ID: ai-sales-tools-api."
+    },
+    {
+      "evidence_id": "arch-04",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: Pinecone vector store (index: pinecone-sales-v3) + ElastiCache session context confirmed. Context window: 128k tokens in SSM /ai-sales/model/context-window."
+    },
+    {
+      "evidence_id": "arch-05",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: Internal-only SG confirmed on agent message bus (sg-0a1b2c3d4e5f6a7b8). TLS 1.3 enforced on all inter-agent edges. No public ingress rules."
+    },
+    {
+      "evidence_id": "arch-06",
+      "status": "Partial",
+      "notes": "Topology + Cloud API: 4 container images with pinned digests confirmed in ECR. SBOM generation not detected. Manual supply chain documentation review required for third-party SDK licenses."
+    },
+    {
+      "evidence_id": "iam-01",
+      "status": "Compliant",
+      "notes": "Cloud API: Dedicated IAM roles confirmed per agent with OIDC token federation. ARNs: arn:aws:iam::123456789012:role/ai-sales-orchestrator-role, arn:aws:iam::123456789012:role/ai-sales-subagent-role."
+    },
+    {
+      "evidence_id": "iam-02",
+      "status": "Compliant",
+      "notes": "Cloud API: MFA enforced on all 12 human users via IAM policy arn:aws:iam::123456789012:policy/EnforceMFA. Okta SSO via SAML confirmed."
+    },
+    {
+      "evidence_id": "iam-03",
+      "status": "Compliant",
+      "notes": "Cloud API: IAM SimulatePrincipalPolicy confirmed least-privilege on all agent roles. No wildcard actions. Orchestrator limited to ecs:RunTask, ssm:GetParameter, secretsmanager:GetSecretValue."
+    },
+    {
+      "evidence_id": "iam-04",
+      "status": "Partial",
+      "notes": "Cloud API: STS AssumeRole with inline session policies available. Dynamic per-request scope reduction not yet implemented. Capability present but not enforced at runtime."
+    },
+    {
+      "evidence_id": "iam-05",
+      "status": "Compliant",
+      "notes": "Cloud API: Secrets Manager ListSecrets confirmed 8 secrets with 30-day auto-rotation. No secrets in env vars. ARNs: arn:aws:secretsmanager:us-east-1:123456789012:secret/ai-sales/*."
+    },
+    {
+      "evidence_id": "iam-06",
+      "status": "Compliant",
+      "notes": "Cloud API: IAM confirmed MaxSessionDuration=3600s on all agent roles. Token revocation via aws:TokenIssueTime condition confirmed."
+    },
+    {
+      "evidence_id": "model-01",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: Model confirmed as gpt-4o-2024-08-06 (OpenAI). Model card URL in SSM /ai-sales/model/card-url. Node ID: topology://models/gpt4o-prod."
+    },
+    {
+      "evidence_id": "model-02",
+      "status": "Partial",
+      "notes": "Cloud API: OpenAI confirmed as sole provider. Training data provenance relies on OpenAI model card. No internal dataset audit trail — base model only."
+    },
+    {
+      "evidence_id": "model-03",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: No fine-tuning pipeline or RLHF adapters detected in ECR or topology graph. Base gpt-4o-2024-08-06 only confirmed."
+    },
+    {
+      "evidence_id": "model-04",
+      "status": "Compliant",
+      "notes": "Cloud API: CodePipeline ai-sales-model-pipeline confirmed with manual approval gate before model deploys. Model version pinned in SSM /ai-sales/model/version."
+    },
+    {
+      "evidence_id": "model-06",
+      "status": "Compliant",
+      "notes": "Cloud API: OpenAI API key in Secrets Manager, access restricted to orchestrator role only. IAM policy simulation confirmed no other roles have access."
+    },
+    {
+      "evidence_id": "sec-01",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: API Gateway request validator + WAF WebACL (arn:aws:wafv2:us-east-1:123456789012:regional/webacl/ai-sales-waf) + prompt guard node confirmed."
+    },
+    {
+      "evidence_id": "sec-02",
+      "status": "Compliant",
+      "notes": "Cloud API: Lambda ai-sales-output-validator confirmed on all agent responses. PII redaction + grounding check active."
+    },
+    {
+      "evidence_id": "sec-03",
+      "status": "Compliant",
+      "notes": "Cloud API: ECS Fargate (no host networking) + per-agent task security groups confirmed. Container isolation verified."
+    },
+    {
+      "evidence_id": "sec-04",
+      "status": "Compliant",
+      "notes": "Cloud API: VPC NACLs deny all inbound 0.0.0.0/0 on agent subnet. No internet gateway attached. VPC ID: vpc-0x1234abcd."
+    },
+    {
+      "evidence_id": "sec-06",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: Tool wrapper Lambda functions confirmed with strict schema validation on all 12 tool return edges. SSM config: /ai-sales/tools/validation-mode=strict."
+    },
+    {
+      "evidence_id": "sec-07",
+      "status": "Compliant",
+      "notes": "Cloud API: IAM data boundary policy restricts agent roles to ai-sales-data-prod S3 bucket only. Macie confirms no unintended data access."
+    },
+    {
+      "evidence_id": "human-01",
+      "status": "Compliant",
+      "notes": "Cloud API: Step Functions HITL wait-for-callback state confirmed on high-risk transitions. ARN: arn:aws:states:us-east-1:123456789012:stateMachine:ai-sales-workflow."
+    },
+    {
+      "evidence_id": "human-02",
+      "status": "Compliant",
+      "notes": "Cloud API: Emergency stop Lambda (ai-sales-emergency-stop) with on-call IAM role confirmed. Step Functions abort path verified."
+    },
+    {
+      "evidence_id": "human-03",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: AppConfig guardrail config (5 scope limits) confirmed deployed. Feature flag rollout active. ARN: arn:aws:appconfig:us-east-1:123456789012:application/ai-sales."
+    },
+    {
+      "evidence_id": "human-04",
+      "status": "Partial",
+      "notes": "Cloud API: AI disclosure header via Lambda@Edge confirmed. User acknowledgement audit log present. GDPR transparency documentation requires manual review."
+    },
+    {
+      "evidence_id": "human-05",
+      "status": "Compliant",
+      "notes": "Cloud API: SQS escalation queue (ai-sales-escalation-queue) with PagerDuty subscription + DLQ at 3 retries confirmed."
+    },
+    {
+      "evidence_id": "gov-05",
+      "status": "Partial",
+      "notes": "Cloud API: 4 third-party integrations detected (OpenAI, Pinecone, Twilio, Salesforce). Formal vendor risk assessments require human documentation."
+    },
+    {
+      "evidence_id": "gov-07",
+      "status": "Compliant",
+      "notes": "Cloud API: CodePipeline manual approval gate + CloudTrail change log confirmed. ARN: arn:aws:cloudtrail:us-east-1:123456789012:trail/ai-sales-audit-trail."
+    },
+    {
+      "evidence_id": "mon-01",
+      "status": "Compliant",
+      "notes": "Cloud API: CloudWatch LogGroup /aws/ecs/ai-sales-orchestrator with 90-day retention + structured JSON tracing confirmed."
+    },
+    {
+      "evidence_id": "mon-02",
+      "status": "Compliant",
+      "notes": "Cloud API: CloudTrail ai-sales-audit-trail with S3 log file validation + CloudWatch Logs integration confirmed. Immutable audit trail verified."
+    },
+    {
+      "evidence_id": "mon-03",
+      "status": "Partial",
+      "notes": "Cloud API: CloudWatch Anomaly Detection on 3 agent metrics confirmed (2-week baseline). Full behavioral coverage requires manual threshold calibration."
+    },
+    {
+      "evidence_id": "mon-04",
+      "status": "Compliant",
+      "notes": "Cloud API: CloudWatch Dashboard ai-sales-model-health with drift alarms (5% threshold on token distribution, latency p99, error rate) confirmed."
+    },
+    {
+      "evidence_id": "mon-05",
+      "status": "Partial",
+      "notes": "Cloud API: X-Ray distributed tracing active. Chain-of-thought logging requires application-level configuration beyond API scan scope."
+    },
+    {
+      "evidence_id": "mon-06",
+      "status": "Partial",
+      "notes": "Cloud API: Kinesis Firehose to S3 for Splunk SIEM confirmed. SIEM parsing rules require manual validation."
+    },
+    {
+      "evidence_id": "data-01",
+      "status": "Compliant",
+      "notes": "Cloud API: Macie classification active on ai-sales-data-prod S3 bucket. PII, Confidential, Internal labels confirmed."
+    },
+    {
+      "evidence_id": "data-02",
+      "status": "Compliant",
+      "notes": "Cloud API: Agent role restricted to 3 of 47 data buckets. Macie confirms no unintended data access patterns."
+    },
+    {
+      "evidence_id": "data-03",
+      "status": "Partial",
+      "notes": "Cloud API: Macie PII detection active. GDPR processing records and data subject rights procedures require manual documentation."
+    },
+    {
+      "evidence_id": "data-04",
+      "status": "Compliant",
+      "notes": "Cloud API: S3 lifecycle (90-day logs, 365-day audit trail) + CloudWatch 90-day retention confirmed."
+    },
+    {
+      "evidence_id": "data-05",
+      "status": "Compliant",
+      "notes": "Cloud API: SCPs deny data writes to non-EU/US regions. CloudFront geo-restriction confirmed."
+    }
+  ]
+}

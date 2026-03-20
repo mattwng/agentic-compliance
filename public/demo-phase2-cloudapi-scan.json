@@ -1,0 +1,207 @@
+{
+  "assessment_name": "AI Sales Assistant — Phase 2: Cloud Infrastructure API Scan",
+  "system_name": "AI Sales Assistant",
+  "notes": "AWS API scan completed 2026-03-19. Enumerated IAM, Secrets Manager, VPC, CloudWatch, S3, ECR across us-east-1 and eu-west-1. Merges with Phase 1 topology results. 8 controls with cloudApiTier=manual are excluded from automated workflow — add manually for full audit.",
+  "responses": [
+    {
+      "evidence_id": "arch-02",
+      "status": "Compliant",
+      "notes": "AWS ECS DescribeServices confirmed 4-container task definition: orchestrator + 3 sub-agents. Task ARN: arn:aws:ecs:us-east-1:123456789012:service/ai-sales-cluster/orchestrator-svc. Last verified 2026-03-19T06:02:11Z."
+    },
+    {
+      "evidence_id": "arch-03",
+      "status": "Compliant",
+      "notes": "AWS API Gateway ListResources enumerated 12 tool endpoints. All routes verified with IAM auth. API ID: ai-sales-tools-api (us-east-1). Last verified 2026-03-19T06:02:11Z."
+    },
+    {
+      "evidence_id": "arch-04",
+      "status": "Compliant",
+      "notes": "AWS API confirmed Pinecone index pinecone-sales-v3 (us-east-1) + ElastiCache cluster for session context. Context window config in SSM Parameter Store: /ai-sales/model/context-window=128000. Last verified 2026-03-19T06:02:11Z."
+    },
+    {
+      "evidence_id": "arch-05",
+      "status": "Compliant",
+      "notes": "AWS VPC DescribeVpcs + DescribeSecurityGroups confirmed internal-only SG on agent message bus. No public ingress rules. SG ID: sg-0a1b2c3d4e5f6a7b8. Last verified 2026-03-19T06:02:11Z."
+    },
+    {
+      "evidence_id": "arch-06",
+      "status": "Partial",
+      "notes": "AWS ECR DescribeImages confirmed 4 container images with pinned digests. SBOM generation not detected in pipeline. Manual verification of third-party SDK licenses required."
+    },
+    {
+      "evidence_id": "iam-01",
+      "status": "Compliant",
+      "notes": "AWS IAM GetRole confirmed dedicated execution roles for each agent: arn:aws:iam::123456789012:role/ai-sales-orchestrator-role, arn:aws:iam::123456789012:role/ai-sales-subagent-role. OIDC-based token federation confirmed. Last verified 2026-03-19T06:05:33Z."
+    },
+    {
+      "evidence_id": "iam-02",
+      "status": "Compliant",
+      "notes": "AWS IAM ListUsers + GetAccountSummary confirmed MFA enforced on all 12 human users via IAM policy arn:aws:iam::123456789012:policy/EnforceMFA. Okta SSO integration via SAML confirmed. Last verified 2026-03-19T06:05:33Z."
+    },
+    {
+      "evidence_id": "iam-03",
+      "status": "Compliant",
+      "notes": "AWS IAM SimulatePrincipalPolicy confirmed least-privilege: orchestrator role limited to ecs:RunTask, ssm:GetParameter, secretsmanager:GetSecretValue. No admin or wildcard actions. ARN: arn:aws:iam::123456789012:role/ai-sales-orchestrator-role. Last verified 2026-03-19T06:05:33Z."
+    },
+    {
+      "evidence_id": "iam-04",
+      "status": "Partial",
+      "notes": "AWS IAM API detected session policy support on agent roles. Dynamic scope reduction at runtime not yet implemented — STS AssumeRole with inline session policy available but not applied per-request."
+    },
+    {
+      "evidence_id": "iam-05",
+      "status": "Compliant",
+      "notes": "AWS Secrets Manager ListSecrets confirmed 8 secrets with automatic rotation enabled (30-day). No secrets in environment variables. ARNs: arn:aws:secretsmanager:us-east-1:123456789012:secret/ai-sales/*. Last verified 2026-03-19T06:05:33Z."
+    },
+    {
+      "evidence_id": "iam-06",
+      "status": "Compliant",
+      "notes": "AWS IAM confirmed session token MaxSessionDuration=3600s on all agent roles. Token revocation via IAM policy condition key aws:TokenIssueTime confirmed. ARN: arn:aws:iam::123456789012:role/ai-sales-orchestrator-role. Last verified 2026-03-19T06:05:33Z."
+    },
+    {
+      "evidence_id": "model-01",
+      "status": "Compliant",
+      "notes": "AWS SSM GetParameter confirmed model config: model=gpt-4o-2024-08-06, provider=openai. Model card URL stored in /ai-sales/model/card-url. Last verified 2026-03-19T06:08:44Z."
+    },
+    {
+      "evidence_id": "model-02",
+      "status": "Partial",
+      "notes": "AWS API confirmed OpenAI as sole model provider. Training data provenance delegated to OpenAI model card. Internal fine-tuning dataset audit trail not present — base model only confirmed."
+    },
+    {
+      "evidence_id": "model-03",
+      "status": "Compliant",
+      "notes": "AWS ECR + SSM confirmed no fine-tuning pipeline or RLHF adapter in deployment. Base gpt-4o-2024-08-06 only. Last verified 2026-03-19T06:08:44Z."
+    },
+    {
+      "evidence_id": "model-04",
+      "status": "Compliant",
+      "notes": "AWS CodePipeline ListPipelines confirmed CI/CD pipeline ai-sales-model-pipeline with change approval stage. Model version pinned in SSM: /ai-sales/model/version=gpt-4o-2024-08-06. Last verified 2026-03-19T06:08:44Z."
+    },
+    {
+      "evidence_id": "model-06",
+      "status": "Compliant",
+      "notes": "AWS IAM confirmed model API key stored in Secrets Manager with access restricted to arn:aws:iam::123456789012:role/ai-sales-orchestrator-role. No other roles have GetSecretValue on /ai-sales/openai-key. Last verified 2026-03-19T06:08:44Z."
+    },
+    {
+      "evidence_id": "sec-01",
+      "status": "Compliant",
+      "notes": "AWS API Gateway confirmed request validator on all routes + WAF WebACL arn:aws:wafv2:us-east-1:123456789012:regional/webacl/ai-sales-waf attached. Prompt injection rules active. Last verified 2026-03-19T06:11:55Z."
+    },
+    {
+      "evidence_id": "sec-02",
+      "status": "Compliant",
+      "notes": "AWS Lambda confirmed output validation function ai-sales-output-validator (Node 20.x) invoked on every agent response. PII redaction + grounding check confirmed in function config. Last verified 2026-03-19T06:11:55Z."
+    },
+    {
+      "evidence_id": "sec-03",
+      "status": "Compliant",
+      "notes": "AWS ECS confirmed Fargate launch type with no host network mode. Task-level security groups isolate each agent container. SG IDs per agent confirmed. Last verified 2026-03-19T06:11:55Z."
+    },
+    {
+      "evidence_id": "sec-04",
+      "status": "Compliant",
+      "notes": "AWS VPC DescribeNetworkAcls + DescribeSecurityGroups confirmed agent subnet isolated with no internet gateway. NACLs deny all inbound from 0.0.0.0/0. VPC ID: vpc-0x1234abcd. Last verified 2026-03-19T06:11:55Z."
+    },
+    {
+      "evidence_id": "sec-06",
+      "status": "Compliant",
+      "notes": "AWS Lambda confirmed tool wrapper functions validate all tool return schemas before passing to orchestrator. Schema validation config in SSM: /ai-sales/tools/validation-mode=strict. Last verified 2026-03-19T06:11:55Z."
+    },
+    {
+      "evidence_id": "sec-07",
+      "status": "Compliant",
+      "notes": "AWS IAM confirmed data boundary policy restricts agent roles to S3 bucket arn:aws:s3:::ai-sales-data-prod/* only. No access to other buckets confirmed via policy simulation. Last verified 2026-03-19T06:11:55Z."
+    },
+    {
+      "evidence_id": "human-01",
+      "status": "Compliant",
+      "notes": "AWS Step Functions DescribeStateMachine confirmed HITL wait-for-callback state on high-risk transitions. State machine ARN: arn:aws:states:us-east-1:123456789012:stateMachine:ai-sales-workflow. Last verified 2026-03-19T06:14:06Z."
+    },
+    {
+      "evidence_id": "human-02",
+      "status": "Compliant",
+      "notes": "AWS ECS + Lambda confirmed kill-switch Lambda ai-sales-emergency-stop with IAM allow for on-call role. Step Functions abort confirmed. ARN: arn:aws:lambda:us-east-1:123456789012:function:ai-sales-emergency-stop. Last verified 2026-03-19T06:14:06Z."
+    },
+    {
+      "evidence_id": "human-03",
+      "status": "Compliant",
+      "notes": "AWS AppConfig confirmed agent guardrail config ai-sales-guardrails with 5 scope limits deployed. Feature flag rollout confirmed. ARN: arn:aws:appconfig:us-east-1:123456789012:application/ai-sales. Last verified 2026-03-19T06:14:06Z."
+    },
+    {
+      "evidence_id": "human-04",
+      "status": "Partial",
+      "notes": "AWS API confirmed AI disclosure header injected via Lambda@Edge on all responses. User acknowledgement audit log format requires human review for GDPR transparency compliance documentation."
+    },
+    {
+      "evidence_id": "human-05",
+      "status": "Compliant",
+      "notes": "AWS SQS ListQueues confirmed escalation queue ai-sales-escalation-queue with PagerDuty subscription. Dead-letter queue configured at 3 retries. ARN: arn:aws:sqs:us-east-1:123456789012:ai-sales-escalation-queue. Last verified 2026-03-19T06:14:06Z."
+    },
+    {
+      "evidence_id": "gov-05",
+      "status": "Partial",
+      "notes": "AWS Config ListAggregateDiscoveredResources confirmed 4 third-party service integrations. Formal vendor risk assessments for OpenAI, Pinecone, Twilio, and Salesforce not detected in automated scan — require human documentation."
+    },
+    {
+      "evidence_id": "gov-07",
+      "status": "Compliant",
+      "notes": "AWS CodePipeline confirmed change approval stage with manual approval action required before model/prompt deploys. Change log in CloudTrail: arn:aws:cloudtrail:us-east-1:123456789012:trail/ai-sales-audit-trail. Last verified 2026-03-19T06:17:22Z."
+    },
+    {
+      "evidence_id": "mon-01",
+      "status": "Compliant",
+      "notes": "AWS CloudWatch LogGroups confirmed /aws/ecs/ai-sales-orchestrator with 90-day retention. Structured JSON logging with trace IDs on all agent actions. Last verified 2026-03-19T06:17:22Z."
+    },
+    {
+      "evidence_id": "mon-02",
+      "status": "Compliant",
+      "notes": "AWS CloudTrail DescribeTrails confirmed ai-sales-audit-trail with S3 log validation enabled. CloudWatch Logs integration active. ARN: arn:aws:cloudtrail:us-east-1:123456789012:trail/ai-sales-audit-trail. Last verified 2026-03-19T06:17:22Z."
+    },
+    {
+      "evidence_id": "mon-03",
+      "status": "Partial",
+      "notes": "AWS CloudWatch confirmed Anomaly Detection on 3 agent metrics (invocation count, error rate, latency). Behavioral baseline window: 2 weeks. Full UEBA coverage requires additional manual threshold tuning."
+    },
+    {
+      "evidence_id": "mon-04",
+      "status": "Compliant",
+      "notes": "AWS CloudWatch Dashboard ai-sales-model-health confirmed drift metrics: token distribution, latency p99, error rate with 5% threshold alarms. Last verified 2026-03-19T06:17:22Z."
+    },
+    {
+      "evidence_id": "mon-05",
+      "status": "Partial",
+      "notes": "AWS X-Ray confirmed distributed tracing active across all agent nodes. Full explainability output (chain-of-thought logging) requires application-level configuration beyond what API scan can confirm."
+    },
+    {
+      "evidence_id": "mon-06",
+      "status": "Partial",
+      "notes": "AWS CloudWatch confirmed Kinesis Firehose delivery stream to S3 for SIEM ingestion. SIEM platform (Splunk) confirmed as destination but parsing rules require human validation."
+    },
+    {
+      "evidence_id": "data-01",
+      "status": "Compliant",
+      "notes": "AWS Macie confirmed data classification active on ai-sales-data-prod S3 bucket. Sensitivity labels: PII, Confidential, Internal detected and tagged. Last verified 2026-03-19T06:20:33Z."
+    },
+    {
+      "evidence_id": "data-02",
+      "status": "Compliant",
+      "notes": "AWS IAM + S3 bucket policies confirmed agent role has access to 3 of 47 data buckets matching sales domain only. Macie confirmed no unintended data access. Last verified 2026-03-19T06:20:33Z."
+    },
+    {
+      "evidence_id": "data-03",
+      "status": "Partial",
+      "notes": "AWS Macie confirmed PII detection active. Formal GDPR processing records and data subject rights procedures require human documentation review."
+    },
+    {
+      "evidence_id": "data-04",
+      "status": "Compliant",
+      "notes": "AWS S3 LifecycleConfiguration confirmed 90-day retention on agent logs, 365-day on audit trail. CloudWatch log group retention: 90 days. ARN: arn:aws:s3:::ai-sales-data-prod. Last verified 2026-03-19T06:20:33Z."
+    },
+    {
+      "evidence_id": "data-05",
+      "status": "Compliant",
+      "notes": "AWS Config confirmed S3 Transfer Acceleration + CloudFront distribution restricted to EU/US regions only. SCPs deny data writes to prohibited regions. Last verified 2026-03-19T06:20:33Z."
+    }
+  ]
+}

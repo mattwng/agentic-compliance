@@ -1,0 +1,247 @@
+{
+  "assessment_name": "AI Sales Assistant — Phase 3b: Full Compliance Audit (All 48 Controls)",
+  "system_name": "AI Sales Assistant",
+  "notes": "Complete audit incorporating all 40 automated controls plus 8 manually documented controls. Manual entries authored by Compliance Lead 2026-03-20. This represents a full compliance audit baseline suitable for auditor submission.",
+  "responses": [
+    {
+      "evidence_id": "arch-01",
+      "status": "Compliant",
+      "notes": "MANUAL: Architecture diagram v3.2 authored by Platform Engineering 2026-03-15. Diagram ID: ARCH-DIAG-2026-001 in Confluence. Covers all 4 agent containers, 12 tool integrations, VPC topology, and data flow annotations. Reviewed by CISO 2026-03-17."
+    },
+    {
+      "evidence_id": "arch-02",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: ECS DescribeServices + topology graph confirmed 4-agent architecture. Task ARN: arn:aws:ecs:us-east-1:123456789012:service/ai-sales-cluster/orchestrator-svc."
+    },
+    {
+      "evidence_id": "arch-03",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: 12 tool endpoints enumerated via API Gateway + topology scan. All routes IAM-authenticated."
+    },
+    {
+      "evidence_id": "arch-04",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: Pinecone vector store + ElastiCache session context confirmed. Context window: 128k tokens."
+    },
+    {
+      "evidence_id": "arch-05",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: Internal-only SG on agent message bus (sg-0a1b2c3d4e5f6a7b8). TLS 1.3 enforced."
+    },
+    {
+      "evidence_id": "arch-06",
+      "status": "Partial",
+      "notes": "Topology + Cloud API: 4 container images with pinned digests in ECR. SBOM not yet generated — scheduled for next sprint."
+    },
+    {
+      "evidence_id": "iam-01",
+      "status": "Compliant",
+      "notes": "Cloud API: Dedicated IAM roles per agent with OIDC federation. ARNs: arn:aws:iam::123456789012:role/ai-sales-orchestrator-role, arn:aws:iam::123456789012:role/ai-sales-subagent-role."
+    },
+    {
+      "evidence_id": "iam-02",
+      "status": "Compliant",
+      "notes": "Cloud API: MFA enforced via arn:aws:iam::123456789012:policy/EnforceMFA. Okta SSO via SAML confirmed."
+    },
+    {
+      "evidence_id": "iam-03",
+      "status": "Compliant",
+      "notes": "Cloud API: IAM SimulatePrincipalPolicy confirmed least-privilege on all agent roles. No wildcard actions."
+    },
+    {
+      "evidence_id": "iam-04",
+      "status": "Partial",
+      "notes": "Cloud API: STS inline session policies available but dynamic per-request scope reduction not yet enforced."
+    },
+    {
+      "evidence_id": "iam-05",
+      "status": "Compliant",
+      "notes": "Cloud API: 8 secrets in Secrets Manager with 30-day auto-rotation. No plaintext credentials in env vars."
+    },
+    {
+      "evidence_id": "iam-06",
+      "status": "Compliant",
+      "notes": "Cloud API: MaxSessionDuration=3600s + token revocation via aws:TokenIssueTime condition confirmed."
+    },
+    {
+      "evidence_id": "model-01",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: gpt-4o-2024-08-06 (OpenAI). Model card URL: platform.openai.com/docs/models/gpt-4o."
+    },
+    {
+      "evidence_id": "model-02",
+      "status": "Partial",
+      "notes": "Cloud API: Base OpenAI model only. Training data provenance relies on OpenAI's published documentation — no internal fine-tuning dataset."
+    },
+    {
+      "evidence_id": "model-03",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: No fine-tuning pipeline or RLHF adapters in ECR or topology graph."
+    },
+    {
+      "evidence_id": "model-04",
+      "status": "Compliant",
+      "notes": "Cloud API: CodePipeline with manual approval gate. Model version pinned in SSM."
+    },
+    {
+      "evidence_id": "model-05",
+      "status": "Partial",
+      "notes": "MANUAL: Red-team exercise conducted 2026-02-10 by external firm (TrustLayer Security). Report ID: RT-2026-002. Adversarial ML testing (model inversion, prompt extraction) completed — 2 medium findings, 0 critical. Bias and fairness evaluation scheduled Q2 2026 pending dataset availability."
+    },
+    {
+      "evidence_id": "model-06",
+      "status": "Compliant",
+      "notes": "Cloud API: OpenAI API key restricted to orchestrator role in Secrets Manager. No other roles have access."
+    },
+    {
+      "evidence_id": "sec-01",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: API Gateway validator + WAF WebACL + topology prompt guard node confirmed."
+    },
+    {
+      "evidence_id": "sec-02",
+      "status": "Compliant",
+      "notes": "Cloud API: Lambda ai-sales-output-validator with PII redaction + grounding check confirmed."
+    },
+    {
+      "evidence_id": "sec-03",
+      "status": "Compliant",
+      "notes": "Cloud API: ECS Fargate + per-agent task security groups confirmed."
+    },
+    {
+      "evidence_id": "sec-04",
+      "status": "Compliant",
+      "notes": "Cloud API: VPC NACLs deny all inbound from 0.0.0.0/0. No internet gateway on agent subnet."
+    },
+    {
+      "evidence_id": "sec-05",
+      "status": "Partial",
+      "notes": "MANUAL: Adversarial ML threat model documented in RT-2026-002. Defenses against model inversion implemented (output truncation, rate limiting). Poisoning defenses: data pipeline integrity checks in place. Evasion defenses: partial — input perturbation detection scheduled Q2 2026."
+    },
+    {
+      "evidence_id": "sec-06",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: Tool wrapper Lambda functions with strict schema validation on all 12 tool return edges confirmed."
+    },
+    {
+      "evidence_id": "sec-07",
+      "status": "Compliant",
+      "notes": "Cloud API: IAM data boundary + Macie classification confirms no unintended data exfiltration paths."
+    },
+    {
+      "evidence_id": "human-01",
+      "status": "Compliant",
+      "notes": "Cloud API: Step Functions HITL wait-for-callback state on high-risk transitions. ARN: arn:aws:states:us-east-1:123456789012:stateMachine:ai-sales-workflow."
+    },
+    {
+      "evidence_id": "human-02",
+      "status": "Compliant",
+      "notes": "Cloud API: Emergency stop Lambda + Step Functions abort path confirmed."
+    },
+    {
+      "evidence_id": "human-03",
+      "status": "Compliant",
+      "notes": "Topology + Cloud API: AppConfig guardrail config (5 scope limits) deployed."
+    },
+    {
+      "evidence_id": "human-04",
+      "status": "Partial",
+      "notes": "Cloud API: AI disclosure header confirmed. GDPR transparency documentation partially complete — data subject rights procedure drafted but not yet approved by DPO."
+    },
+    {
+      "evidence_id": "human-05",
+      "status": "Compliant",
+      "notes": "Cloud API: SQS escalation queue + PagerDuty + DLQ at 3 retries confirmed."
+    },
+    {
+      "evidence_id": "gov-01",
+      "status": "Partial",
+      "notes": "MANUAL: AI Risk Register (DOC-GOV-2026-001) drafted by Risk Management 2026-03-12. Covers 14 identified risks across 5 impact categories. Annual review cycle set. Pending CISO sign-off scheduled 2026-03-25."
+    },
+    {
+      "evidence_id": "gov-02",
+      "status": "Compliant",
+      "notes": "MANUAL: AI Acceptable Use Policy v1.2 approved by Legal and CISO 2026-02-28. Published on internal intranet. Policy ID: POL-AI-2026-001. Covers prohibited uses, agent delegation limits, and employee obligations."
+    },
+    {
+      "evidence_id": "gov-03",
+      "status": "Partial",
+      "notes": "MANUAL: EU AI Act risk classification performed by Legal 2026-03-05. AI Sales Assistant classified as Limited Risk (automated customer interaction). High-risk determination not triggered. Documentation pending external legal review before filing."
+    },
+    {
+      "evidence_id": "gov-04",
+      "status": "Partial",
+      "notes": "MANUAL: Conformity assessment initiated 2026-03-10. Technical documentation per Annex IV in progress. CE marking process not yet complete — expected Q3 2026 pending EU legal entity registration."
+    },
+    {
+      "evidence_id": "gov-05",
+      "status": "Partial",
+      "notes": "Cloud API + MANUAL: 4 vendors identified (OpenAI, Pinecone, Twilio, Salesforce). OpenAI and Salesforce SOC 2 Type II reports reviewed 2026-03-15. Pinecone and Twilio assessments pending — scheduled Q2 2026."
+    },
+    {
+      "evidence_id": "gov-06",
+      "status": "Compliant",
+      "notes": "MANUAL: AI Incident Response Plan (DOC-IRP-2026-002) approved 2026-03-01. Covers AI-specific scenarios: model hallucination incidents, prompt injection attacks, agent runaway actions. Tabletop exercise completed 2026-03-08. Runbook integrated with PagerDuty."
+    },
+    {
+      "evidence_id": "gov-07",
+      "status": "Compliant",
+      "notes": "Cloud API: CodePipeline manual approval gate + CloudTrail audit log confirmed for all model/prompt changes."
+    },
+    {
+      "evidence_id": "mon-01",
+      "status": "Compliant",
+      "notes": "Cloud API: CloudWatch LogGroup with 90-day retention + structured JSON tracing confirmed."
+    },
+    {
+      "evidence_id": "mon-02",
+      "status": "Compliant",
+      "notes": "Cloud API: CloudTrail with S3 log file validation + CloudWatch integration. Immutable audit trail verified."
+    },
+    {
+      "evidence_id": "mon-03",
+      "status": "Partial",
+      "notes": "Cloud API: CloudWatch Anomaly Detection on 3 metrics (2-week baseline). Full behavioral coverage requires additional manual threshold calibration."
+    },
+    {
+      "evidence_id": "mon-04",
+      "status": "Compliant",
+      "notes": "Cloud API: CloudWatch Dashboard with drift alarms (5% threshold on token distribution, latency p99, error rate) confirmed."
+    },
+    {
+      "evidence_id": "mon-05",
+      "status": "Partial",
+      "notes": "Cloud API: X-Ray tracing active. Chain-of-thought logging implemented at application level but explainability output format not yet standardized."
+    },
+    {
+      "evidence_id": "mon-06",
+      "status": "Partial",
+      "notes": "Cloud API: Kinesis Firehose to Splunk confirmed. SIEM parsing rules in review — not yet validated by SOC team."
+    },
+    {
+      "evidence_id": "data-01",
+      "status": "Compliant",
+      "notes": "Cloud API: Macie classification active with PII, Confidential, Internal labels on ai-sales-data-prod."
+    },
+    {
+      "evidence_id": "data-02",
+      "status": "Compliant",
+      "notes": "Cloud API: Agent role restricted to 3 of 47 buckets. No unintended data access confirmed."
+    },
+    {
+      "evidence_id": "data-03",
+      "status": "Partial",
+      "notes": "Cloud API + MANUAL: Macie PII detection active. GDPR Records of Processing Activities (ROPA) entry drafted 2026-03-18 — pending DPO review."
+    },
+    {
+      "evidence_id": "data-04",
+      "status": "Compliant",
+      "notes": "Cloud API: S3 lifecycle (90-day logs, 365-day audit) + CloudWatch 90-day retention confirmed."
+    },
+    {
+      "evidence_id": "data-05",
+      "status": "Compliant",
+      "notes": "Cloud API: SCPs deny non-EU/US region writes. CloudFront geo-restriction confirmed."
+    }
+  ]
+}
