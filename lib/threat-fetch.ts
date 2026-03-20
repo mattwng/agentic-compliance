@@ -146,10 +146,9 @@ async function runFetch(): Promise<{ grouped: Record<string, ThreatEntry[]>; sou
     fetchCisaKev(),
     fetchAIID(),
     fetchMitreAtlas(),
-    fetchFireTail(),
   ])
 
-  const sources = ['CISA KEV', 'AI Incident Database', 'MITRE ATLAS', 'FireTail AI Breaches']
+  const sources = ['CISA KEV', 'AI Incident Database', 'MITRE ATLAS']
   const grouped: Record<string, ThreatEntry[]> = {}
   const sources_status: Record<string, SourceStatus> = {}
 
@@ -346,42 +345,3 @@ async function fetchMitreAtlas(): Promise<[ThreatEntry[], SourceStatus]> {
   }
 }
 
-// ── FireTail AI Breaches ───────────────────────────────────────────────────────
-
-async function fetchFireTail(): Promise<[ThreatEntry[], SourceStatus]> {
-  try {
-    const resp = await fetch('https://firetail.io/ai-breach-tracker', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AI-Threat-Tracker/1.0)' },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    })
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-    const html = await resp.text()
-
-    // Extract JSON-LD or script data if present
-    const scriptMatch = html.match(/<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/)
-    if (scriptMatch) {
-      try {
-        const data = JSON.parse(scriptMatch[1])
-        const items = data?.pageProps?.breaches ?? data?.pageProps?.incidents ?? data?.pageProps?.data ?? []
-        if (items.length >= 3) {
-          const entries: ThreatEntry[] = items.slice(0, 50).map((b: Record<string, string>, i: number) => ({
-            id: `firetail-${i}`,
-            source: 'FireTail AI Breaches',
-            title: b.title ?? b.name ?? b.company ?? `Breach #${i + 1}`,
-            description: String(b.description ?? b.summary ?? 'AI breach incident.').slice(0, 400),
-            vulnerability_summary: 'AI system breach tracked by FireTail.',
-            published: (() => { try { return new Date(b.date ?? b.published ?? '').toISOString() } catch { return new Date().toISOString() } })(),
-            link: b.url ?? b.link ?? 'https://firetail.io/ai-breach-tracker',
-            severity: 'high' as ThreatSeverity,
-            tags: ['ai-breach', 'firetail'],
-          }))
-          return [entries, { ok: true, type: 'live', count: entries.length, error: null }]
-        }
-      } catch { /* fall through */ }
-    }
-
-    return [[], { ok: false, type: 'live', count: 0, error: 'Site appears JS-rendered; data unavailable.' }]
-  } catch (e) {
-    return [[], { ok: false, type: 'live', count: 0, error: String(e) }]
-  }
-}
