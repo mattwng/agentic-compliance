@@ -27,14 +27,14 @@ export default function Navbar() {
   const alertCount = (alertData?.criticalCount ?? 0)
 
   return (
-    <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <nav className="border-b border-slate-800 bg-black sticky top-0 z-50">
       <div className="container mx-auto px-4 max-w-[1400px] flex items-center justify-between h-16">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg text-slate-100">
-          <div className="h-7 w-7 overflow-hidden flex-shrink-0">
+          <div className="h-7 w-7 overflow-hidden flex-shrink-0 rounded-sm">
             <img
               src="/illuminait-logo.png"
               alt="IlluminAIT"
-              style={{ width: '100%', height: '133%', objectFit: 'cover', objectPosition: 'top', filter: 'invert(1)' }}
+              style={{ width: '100%', height: '148%', objectFit: 'cover', objectPosition: 'top', filter: 'invert(1)' }}
             />
           </div>
           <span className="hidden sm:block">Agentic AI Compliance</span>

@@ -159,7 +159,7 @@ export default function Home() {
                         <td className="py-3 px-4 font-bold">{a.overallScore}%</td>
                         <td className="py-3 px-4"><Badge className={`${rag.bg} ${rag.text} border-0 text-xs`}>{rag.label}</Badge></td>
                         <td className="py-3 px-4">
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <Button size="sm" variant="outline" className="border-slate-700 h-8" onClick={() => router.push(`/scores?id=${a.id}`)}>
                               <Eye className="h-3 w-3 mr-1" /> View
                             </Button>

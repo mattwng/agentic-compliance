@@ -114,7 +114,7 @@ function ScoresContent() {
           <h1 className="text-3xl font-bold">Risk Scores</h1>
           <p className="text-slate-400 mt-1">Compliance scores by framework and domain</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => setShowTrend(!showTrend)} variant="outline" className="border-slate-700">
             <TrendingUp className="h-4 w-4 mr-2" /> {showTrend ? 'Hide' : 'Show'} Trend
           </Button>
@@ -145,8 +145,8 @@ function ScoresContent() {
         <>
           {/* Overall score card */}
           <Card className={`border-slate-800 ${rag?.bg}`}>
-            <CardContent className="pt-6 flex items-center gap-6">
-              <div className="text-6xl font-black" style={{ color: rag?.dot }}>{selected.overallScore}%</div>
+            <CardContent className="pt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+              <div className="text-5xl sm:text-6xl font-black shrink-0" style={{ color: rag?.dot }}>{selected.overallScore}%</div>
               <div>
                 <div className="text-xl font-bold text-slate-100">{rag?.label}</div>
                 <div className="text-slate-400 text-sm">{selected.systemName} — {selected.name}</div>
@@ -166,13 +166,15 @@ function ScoresContent() {
                   const score = selected.frameworkScores[fw] ?? 0
                   const fwRag = getRAG(score)
                   return (
-                    <div key={fw} className="flex items-center gap-4">
-                      <div className="w-44 text-sm font-medium shrink-0" style={{ color: FRAMEWORK_COLORS[fw] }}>{fw}</div>
-                      <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: fwRag.dot }} />
+                    <div key={fw} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                      <div className="text-sm font-medium sm:w-44 sm:shrink-0" style={{ color: FRAMEWORK_COLORS[fw] }}>{fw}</div>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: fwRag.dot }} />
+                        </div>
+                        <div className="w-12 text-right text-sm font-bold shrink-0">{score}%</div>
+                        <Badge className={`${fwRag.bg} ${fwRag.text} border-0 text-xs w-24 justify-center shrink-0`}>{fwRag.label}</Badge>
                       </div>
-                      <div className="w-12 text-right text-sm font-bold">{score}%</div>
-                      <Badge className={`${fwRag.bg} ${fwRag.text} border-0 text-xs w-24 justify-center`}>{fwRag.label}</Badge>
                     </div>
                   )
                 })}
@@ -214,9 +216,9 @@ function ScoresContent() {
       {/* Section C: Domain weights */}
       <Card className="bg-slate-900 border-slate-800">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <CardTitle>Domain Weight Configuration</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button onClick={() => fileRef.current?.click()} variant="outline" className="border-slate-700 text-sm">
                 <Upload className="h-4 w-4 mr-2" /> Import Threat CSV
               </Button>
@@ -241,31 +243,33 @@ function ScoresContent() {
                 const previewWeight = importPreview?.[domain]
                 const displayWeight = previewWeight ?? currentWeight?.weight ?? 0
                 return (
-                  <div key={domain} className="flex items-center gap-4">
-                    <div className="w-60 text-sm shrink-0" style={{ color: '#94a3b8' }}>{domain}</div>
-                    <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
-                      <div className="h-2 rounded-full bg-indigo-500 transition-all" style={{ width: `${displayWeight * 100}%` }} />
+                  <div key={domain} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                    <div className="text-sm shrink-0 sm:w-60" style={{ color: '#94a3b8' }}>{domain}</div>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
+                        <div className="h-2 rounded-full bg-indigo-500 transition-all" style={{ width: `${displayWeight * 100}%` }} />
+                      </div>
+                      <div className="w-12 text-right text-sm shrink-0">
+                        {importPreview && previewWeight !== undefined && currentWeight?.weight !== previewWeight ? (
+                          <span className="text-amber-400 font-bold">{Math.round(displayWeight * 100)}%</span>
+                        ) : (
+                          <span>{Math.round(displayWeight * 100)}%</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-600 w-16 shrink-0">{importPreview ? 'from CSV' : currentWeight?.source ?? ''}</div>
                     </div>
-                    <div className="w-16 text-right text-sm">
-                      {importPreview && previewWeight !== undefined && currentWeight?.weight !== previewWeight ? (
-                        <span className="text-amber-400 font-bold">{Math.round(displayWeight * 100)}%</span>
-                      ) : (
-                        <span>{Math.round(displayWeight * 100)}%</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-600 w-20">{importPreview ? 'from CSV' : currentWeight?.source ?? ''}</div>
                   </div>
                 )
               })}
             </div>
           )}
           {importPreview && (
-            <div className="mt-6 p-4 rounded-lg border border-amber-800 bg-amber-900/20 flex items-center justify-between">
+            <div className="mt-6 p-4 rounded-lg border border-amber-800 bg-amber-900/20 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
               <div>
                 <p className="text-amber-400 font-medium text-sm">Preview — weights recalculated from threat CSV</p>
                 <p className="text-slate-500 text-xs mt-0.5">Amber values indicate changed weights</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button onClick={() => { setImportPreview(null); if (fileRef.current) fileRef.current.value = '' }} variant="outline" className="border-slate-700 text-sm">Cancel</Button>
                 <Button onClick={confirmImport} disabled={importing} className="bg-amber-600 hover:bg-amber-700 text-sm">Confirm Import</Button>
               </div>

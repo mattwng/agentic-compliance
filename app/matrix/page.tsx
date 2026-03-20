@@ -72,6 +72,7 @@ export default function MatrixPage() {
       </div>
 
       {/* Matrix table */}
+      <p className="text-xs text-slate-500 sm:hidden">← Scroll horizontally to see all domains</p>
       <div className="overflow-auto rounded-lg border border-slate-800">
         <table className="text-xs min-w-[1200px]">
           <thead>

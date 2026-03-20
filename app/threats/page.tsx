@@ -289,7 +289,7 @@ export default function ThreatsPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search threats…"
-          className="bg-slate-800 border-slate-700 max-w-xs text-sm"
+          className="bg-slate-800 border-slate-700 w-full sm:max-w-xs text-sm"
         />
         {/* Assessment gap mapping */}
         <select
@@ -325,7 +325,7 @@ export default function ThreatsPage() {
           </Button>
         )}
         {filtered.length > 0 && (
-          <span className="self-center text-xs text-slate-500 ml-auto">{filtered.length} threats</span>
+          <span className="self-center text-xs text-slate-500 sm:ml-auto">{filtered.length} threats</span>
         )}
       </div>
 
