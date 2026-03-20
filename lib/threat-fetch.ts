@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
+import { loadStaticSources } from './static-threats'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -162,6 +163,11 @@ async function runFetch(): Promise<{ grouped: Record<string, ThreatEntry[]>; sou
       sources_status[name] = { ok: false, type: 'live', count: 0, error: String(result.reason) }
     }
   })
+
+  // Merge static curated sources (ENISA, IBM X-Force, Mandiant, etc.)
+  const { grouped: staticGrouped, sources_status: staticStatus } = loadStaticSources()
+  Object.assign(grouped, staticGrouped)
+  Object.assign(sources_status, staticStatus)
 
   return { grouped, sources_status }
 }
