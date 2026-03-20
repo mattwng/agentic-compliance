@@ -231,16 +231,12 @@ function TrackerContent() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
-          {!assessmentId && (
-            <>
-              <Button onClick={handleDownloadTemplate} variant="outline" className="border-slate-700 text-slate-400 text-sm" title="Download JSON schema template for your discovery tool">
-                <Download className="h-4 w-4 mr-2" /> Template
-              </Button>
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-indigo-700 text-indigo-400 hover:bg-indigo-900/20 text-sm">
-                <FileUp className="h-4 w-4 mr-2" /> Import JSON
-              </Button>
-            </>
-          )}
+          <Button onClick={handleDownloadTemplate} variant="outline" className="border-slate-700 text-slate-400 text-sm" title="Download JSON schema template for your discovery tool">
+            <Download className="h-4 w-4 mr-2" /> Template
+          </Button>
+          <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-indigo-700 text-indigo-400 hover:bg-indigo-900/20 text-sm">
+            <FileUp className="h-4 w-4 mr-2" /> Import JSON
+          </Button>
           <Button onClick={handleSave} disabled={saving} variant="outline" className="border-slate-700">
             <Save className="h-4 w-4 mr-2" /> Save
           </Button>
