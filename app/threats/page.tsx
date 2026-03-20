@@ -1,13 +1,14 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, ExternalLink, AlertCircle } from 'lucide-react'
+import { RefreshCw, ExternalLink, AlertCircle, ShieldAlert } from 'lucide-react'
 import type { ThreatCache, ThreatEntry, ThreatSeverity } from '@/lib/threat-fetch'
+import { EVIDENCE } from '@/lib/evidence-data'
 
 // ── Severity helpers ───────────────────────────────────────────────────────────
 
@@ -20,6 +21,26 @@ const SEV_CONFIG: Record<ThreatSeverity, { label: string; dot: string; badge: st
 }
 
 const SEV_ORDER: ThreatSeverity[] = ['critical', 'high', 'medium', 'low', 'info']
+
+// ── Domain → threat tag mapping for assessment gap correlation ─────────────────
+
+const DOMAIN_THREAT_TAGS: Record<string, string[]> = {
+  'System Architecture & Design':           ['supply-chain', 'architecture', 'atlas', 'mitre'],
+  'Identity, Access & Privilege':           ['credential-theft', 'api-key', 'x-force', 'ibm'],
+  'AI Model & Training Provenance':         ['data-poisoning', 'supply-chain', 'model-weights', 'ip-theft', 'ml', 'nation-state', 'espionage', 'llm'],
+  'Security Controls & Threat Mitigations': ['prompt-injection', 'llm', 'ai-attack', 'atlas', 'mitre', 'cve', 'exploited', 'recon', 'exploitation', 'phishing', 'social-engineering', 'deepfake', 'bec'],
+  'Human Oversight & Control':              ['autonomous-agents', 'agentic-ai', 'ai-incident', 'safety'],
+  'Governance, Risk & Compliance':          ['annual-report', 'nation-state', 'espionage', 'ip-theft'],
+  'Monitoring & Audit':                     ['ai-incident', 'aiid', 'agentic-ai'],
+  'Data Protection & Privacy':              ['ip-theft', 'data-poisoning', 'espionage'],
+}
+
+type AssessmentSummary = {
+  id: string
+  name: string
+  systemName: string
+  responses: Array<{ evidenceId: string; status: string }>
+}
 
 function formatAge(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime()
@@ -37,12 +58,21 @@ function formatDate(isoDate: string): string {
   catch { return isoDate }
 }
 
+function formatTimestamp(isoDate: string): string {
+  try {
+    return new Date(isoDate).toLocaleString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit',
+    })
+  } catch { return isoDate }
+}
+
 // ── Threat Card ────────────────────────────────────────────────────────────────
 
-function ThreatCard({ threat }: { threat: ThreatEntry }) {
+function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: boolean }) {
   const sev = SEV_CONFIG[threat.severity] ?? SEV_CONFIG.info
   return (
-    <Card className="bg-slate-900 border-slate-800 hover:border-slate-700 transition-colors">
+    <Card className={`bg-slate-900 border-slate-800 hover:border-slate-700 transition-colors ${relevant ? 'ring-1 ring-amber-700/50' : ''}`}>
       <CardContent className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
@@ -63,6 +93,11 @@ function ThreatCard({ threat }: { threat: ThreatEntry }) {
 
         <div className="flex items-center gap-2 flex-wrap">
           <Badge className={`text-xs border px-2 py-0 ${sev.badge}`}>{sev.label}</Badge>
+          {relevant && (
+            <Badge className="text-xs border px-2 py-0 bg-amber-900/30 text-amber-300 border-amber-700 flex items-center gap-1">
+              <ShieldAlert className="h-3 w-3" /> Relevant to gaps
+            </Badge>
+          )}
           <span className="text-xs text-slate-500 font-medium">{threat.source}</span>
           <span className="text-xs text-slate-600">·</span>
           <span className="text-xs text-slate-600" title={formatDate(threat.published)}>{formatAge(threat.published)}</span>
@@ -90,10 +125,12 @@ function ThreatCard({ threat }: { threat: ThreatEntry }) {
 
 export default function ThreatsPage() {
   const qc = useQueryClient()
-  const [sevFilter, setSevFilter] = useState<string>('all')
+  const [sevFilter, setSevFilter] = useState<string>('critical')
   const [sourceFilter, setSourceFilter] = useState<string>('')
   const [search, setSearch] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [assessmentFilter, setAssessmentFilter] = useState<string>('')
+  const [relevantOnly, setRelevantOnly] = useState(false)
 
   const { data, isLoading } = useQuery<ThreatCache>({
     queryKey: ['threats'],
@@ -101,10 +138,39 @@ export default function ThreatsPage() {
     refetchInterval: (query) => (query.state.data?.generating ? 5000 : false),
   })
 
+  const { data: assessments } = useQuery<AssessmentSummary[]>({
+    queryKey: ['assessments'],
+    queryFn: () => fetch('/api/assessments').then(r => r.json()),
+  })
+
   const allThreats = useMemo<ThreatEntry[]>(() => {
     if (!data?.grouped) return []
     return Object.values(data.grouped).flat()
   }, [data])
+
+  // Domains with Non-Compliant or Partial items in the selected assessment
+  const gappedDomains = useMemo(() => {
+    if (!assessmentFilter || !assessments) return new Set<string>()
+    const assessment = assessments.find(a => a.id === assessmentFilter)
+    if (!assessment) return new Set<string>()
+    const gapped = new Set<string>()
+    for (const r of assessment.responses) {
+      if (r.status === 'Non-Compliant' || r.status === 'Partial') {
+        const evidence = EVIDENCE.find(e => e.id === r.evidenceId)
+        if (evidence) gapped.add(evidence.domain)
+      }
+    }
+    return gapped
+  }, [assessmentFilter, assessments])
+
+  const isRelevantToGaps = useCallback((threat: ThreatEntry): boolean => {
+    if (gappedDomains.size === 0) return false
+    for (const [domain, tags] of Object.entries(DOMAIN_THREAT_TAGS)) {
+      if (!gappedDomains.has(domain)) continue
+      if (threat.tags.some(t => tags.includes(t))) return true
+    }
+    return false
+  }, [gappedDomains])
 
   const filtered = useMemo(() => {
     return allThreats.filter(t => {
@@ -114,15 +180,18 @@ export default function ThreatsPage() {
         const q = search.toLowerCase()
         if (!t.title.toLowerCase().includes(q) && !t.description.toLowerCase().includes(q) && !t.tags.join(' ').includes(q)) return false
       }
+      if (relevantOnly && !isRelevantToGaps(t)) return false
       return true
     })
-  }, [allThreats, sevFilter, sourceFilter, search])
+  }, [allThreats, sevFilter, sourceFilter, search, relevantOnly, isRelevantToGaps])
 
   const sevCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const t of allThreats) counts[t.severity] = (counts[t.severity] ?? 0) + 1
     return counts
   }, [allThreats])
+
+  const relevantCount = useMemo(() => allThreats.filter(isRelevantToGaps).length, [allThreats, isRelevantToGaps])
 
   const sources = useMemo(() => Object.keys(data?.grouped ?? {}), [data])
 
@@ -132,10 +201,6 @@ export default function ThreatsPage() {
     qc.invalidateQueries({ queryKey: ['threats'] })
     setRefreshing(false)
   }
-
-  const cacheAgeHours = data?.timestamp
-    ? Math.round((Date.now() - new Date(data.timestamp).getTime()) / 3600000)
-    : null
 
   return (
     <div className="space-y-6">
@@ -153,9 +218,9 @@ export default function ThreatsPage() {
               <RefreshCw className="h-3 w-3 animate-spin" /> Fetching live data…
             </span>
           )}
-          {cacheAgeHours !== null && !data?.generating && (
+          {data?.timestamp && !data?.generating && (
             <span className="text-xs text-slate-500">
-              Updated {cacheAgeHours === 0 ? 'just now' : `${cacheAgeHours}h ago`}
+              Updated {formatTimestamp(data.timestamp)}
             </span>
           )}
           <Button
@@ -183,7 +248,7 @@ export default function ThreatsPage() {
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {source} {status.ok ? `(${status.count})` : '(unavailable)'}
+              {source} {status.ok ? `(${status.count})` : '(fetching…)'}
             </span>
           ))}
         </div>
@@ -220,7 +285,7 @@ export default function ThreatsPage() {
       )}
 
       {/* Filters row */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 items-center">
         <select
           value={sourceFilter}
           onChange={e => setSourceFilter(e.target.value)}
@@ -235,9 +300,33 @@ export default function ThreatsPage() {
           placeholder="Search threats…"
           className="bg-slate-800 border-slate-700 max-w-xs text-sm"
         />
-        {(sevFilter !== 'all' || sourceFilter || search) && (
+        {/* Assessment gap mapping */}
+        <select
+          value={assessmentFilter}
+          onChange={e => { setAssessmentFilter(e.target.value); setRelevantOnly(false) }}
+          className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-300"
+        >
+          <option value="">No assessment context</option>
+          {(assessments ?? []).map(a => (
+            <option key={a.id} value={a.id}>{a.systemName} — {a.name}</option>
+          ))}
+        </select>
+        {assessmentFilter && relevantCount > 0 && (
+          <button
+            onClick={() => setRelevantOnly(!relevantOnly)}
+            className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors flex items-center gap-1.5 ${
+              relevantOnly
+                ? 'bg-amber-900/30 text-amber-300 border-amber-700 ring-1 ring-amber-700'
+                : 'bg-slate-900 text-amber-400 border-amber-900/50 hover:border-amber-700'
+            }`}
+          >
+            <ShieldAlert className="h-3.5 w-3.5" />
+            Relevant to gaps ({relevantCount})
+          </button>
+        )}
+        {(sevFilter !== 'all' || sourceFilter || search || relevantOnly) && (
           <Button
-            onClick={() => { setSevFilter('all'); setSourceFilter(''); setSearch('') }}
+            onClick={() => { setSevFilter('all'); setSourceFilter(''); setSearch(''); setRelevantOnly(false) }}
             variant="outline"
             className="border-slate-700 text-slate-400 text-sm"
           >
@@ -249,6 +338,18 @@ export default function ThreatsPage() {
         )}
       </div>
 
+      {/* Assessment gap context banner */}
+      {assessmentFilter && gappedDomains.size > 0 && (
+        <div className="flex items-start gap-2.5 px-4 py-3 bg-amber-900/10 border border-amber-900/30 rounded-lg text-sm">
+          <ShieldAlert className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="text-amber-300 font-medium">Assessment gap context active — </span>
+            <span className="text-amber-500">{relevantCount} threat{relevantCount !== 1 ? 's' : ''} mapped to {gappedDomains.size} domain{gappedDomains.size !== 1 ? 's' : ''} with Non-Compliant or Partial controls: </span>
+            <span className="text-amber-600 text-xs">{[...gappedDomains].join(' · ')}</span>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -258,7 +359,7 @@ export default function ThreatsPage() {
         <Card className="bg-slate-900 border-slate-800">
           <CardContent className="flex flex-col items-center py-20 gap-4">
             <RefreshCw className="h-10 w-10 text-indigo-400 animate-spin" />
-            <p className="text-slate-300 font-medium">Fetching threat intelligence…</p>
+            <p className="text-slate-300 font-medium">Fetching live threat intelligence…</p>
             <p className="text-slate-500 text-sm">Pulling from CISA, MITRE ATLAS, and AI Incident Database. This takes about 30–60 seconds on first load.</p>
           </CardContent>
         </Card>
@@ -271,7 +372,7 @@ export default function ThreatsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map(t => <ThreatCard key={t.id} threat={t} />)}
+          {filtered.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevantToGaps(t)} />)}
         </div>
       )}
     </div>

@@ -131,10 +131,17 @@ export async function getThreats(): Promise<ThreatCache> {
   const stale = loadStaleCache()
   if (stale) return stale
 
+  // Serve static sources immediately so the page isn't blank while live fetch runs
+  const { grouped: staticGrouped, sources_status: staticStatus } = loadStaticSources()
+  const pendingStatus: Record<string, SourceStatus> = {
+    'CISA KEV':             { ok: false, type: 'live', count: 0, error: null },
+    'AI Incident Database': { ok: false, type: 'live', count: 0, error: null },
+    'MITRE ATLAS':          { ok: false, type: 'live', count: 0, error: null },
+  }
   return {
     timestamp: new Date().toISOString(),
-    grouped: {},
-    sources_status: {},
+    grouped: staticGrouped,
+    sources_status: { ...pendingStatus, ...staticStatus },
     generating: true,
   }
 }
