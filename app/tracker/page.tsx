@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { EVIDENCE, DOMAINS, FRAMEWORKS, DOMAIN_COLORS, FRAMEWORK_COLORS } from '@/lib/evidence-data'
 import { useQuery } from '@tanstack/react-query'
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Save, Calculator } from 'lucide-react'
+import { Save, Calculator, FileUp, CheckCircle, X, Download } from 'lucide-react'
 
 type StatusType = 'Compliant' | 'Partial' | 'Non-Compliant' | 'N/A' | ''
 type ResponseMap = Record<string, { status: StatusType; notes: string }>
@@ -36,6 +36,8 @@ function TrackerContent() {
   const [filterFramework, setFilterFramework] = useState('')
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
+  const [importStatus, setImportStatus] = useState<{ count: number; filename: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: weights } = useQuery({
     queryKey: ['weights'],
@@ -107,6 +109,66 @@ function TrackerContent() {
   const ratedCount = EVIDENCE.filter(e => responses[e.id]?.status).length
   const progressPct = Math.round((ratedCount / EVIDENCE.length) * 100)
 
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const json = JSON.parse(ev.target?.result as string)
+        const name = json.assessment_name ?? json.assessmentName ?? assessmentName
+        const sys = json.system_name ?? json.systemName ?? systemName
+        const no = json.notes ?? notes
+        if (json.assessment_name ?? json.assessmentName) setAssessmentName(name)
+        if (json.system_name ?? json.systemName) setSystemName(sys)
+        if (json.notes) setNotes(no)
+
+        // Support both array [{evidence_id, status, notes}] and object map {"id": {status, notes}}
+        const raw = json.responses ?? {}
+        const entries: Array<{ evidence_id: string; status: string; notes?: string }> = Array.isArray(raw)
+          ? raw
+          : Object.entries(raw).map(([id, v]) => ({ evidence_id: id, ...(v as object) }))
+
+        const map: ResponseMap = { ...responses }
+        let count = 0
+        for (const r of entries) {
+          const id = r.evidence_id ?? (r as Record<string, string>).evidenceId
+          if (id && r.status) {
+            map[id] = { status: r.status as StatusType, notes: r.notes ?? '' }
+            count++
+          }
+        }
+        setResponses(map)
+        saveDraft(map, name, sys, no)
+        setImportStatus({ count, filename: file.name })
+      } catch {
+        alert('Invalid JSON file. Please check the format and try again.')
+      }
+      e.target.value = ''
+    }
+    reader.readAsText(file)
+  }
+
+  const handleDownloadTemplate = () => {
+    const template = {
+      assessment_name: 'My AI System — Q1 2026 Review',
+      system_name: 'My AI System',
+      notes: 'Automated discovery scan — replace with your context',
+      responses: EVIDENCE.slice(0, 3).map(e => ({
+        evidence_id: e.id,
+        status: 'Compliant',
+        notes: 'Detected by discovery tool',
+      })).concat([{ evidence_id: '...', status: 'Partial | Compliant | Non-Compliant | N/A', notes: '...' }]),
+    }
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'assessment-template.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const buildPayload = () => ({
     name: assessmentName || 'Unnamed Assessment',
     systemName: systemName || 'Unknown System',
@@ -167,7 +229,18 @@ function TrackerContent() {
           <h1 className="text-3xl font-bold">{assessmentId ? 'Edit Assessment' : 'New Assessment'}</h1>
           <p className="text-slate-400 mt-1">Rate {EVIDENCE.length} evidence items across 10 frameworks</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+          {!assessmentId && (
+            <>
+              <Button onClick={handleDownloadTemplate} variant="outline" className="border-slate-700 text-slate-400 text-sm" title="Download JSON schema template for your discovery tool">
+                <Download className="h-4 w-4 mr-2" /> Template
+              </Button>
+              <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-indigo-700 text-indigo-400 hover:bg-indigo-900/20 text-sm">
+                <FileUp className="h-4 w-4 mr-2" /> Import JSON
+              </Button>
+            </>
+          )}
           <Button onClick={handleSave} disabled={saving} variant="outline" className="border-slate-700">
             <Save className="h-4 w-4 mr-2" /> Save
           </Button>
@@ -176,6 +249,23 @@ function TrackerContent() {
           </Button>
         </div>
       </div>
+
+      {/* Import status banner */}
+      {importStatus && (
+        <div className="flex items-center gap-2.5 px-4 py-3 bg-green-900/20 border border-green-900/30 rounded-lg text-sm text-green-400">
+          <CheckCircle className="h-4 w-4 flex-shrink-0" />
+          <span>
+            Imported <span className="font-semibold">{importStatus.count}/{EVIDENCE.length}</span> responses from{' '}
+            <span className="font-mono text-green-300">{importStatus.filename}</span>
+            {importStatus.count < EVIDENCE.length && (
+              <span className="text-green-600 ml-1">— review and fill remaining items manually</span>
+            )}
+          </span>
+          <button onClick={() => setImportStatus(null)} className="ml-auto text-green-700 hover:text-green-400">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Assessment metadata */}
       <Card className="bg-slate-900 border-slate-800">
