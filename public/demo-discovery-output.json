@@ -1,0 +1,247 @@
+{
+  "assessment_name": "AI Sales Assistant — Enterprise Edition",
+  "system_name": "AI Sales Assistant",
+  "notes": "Automated discovery scan performed by IlluminAIT AI-SPM platform. Scan completed 2026-03-20. Review findings and validate Partial/Non-Compliant controls with system owner before submission.",
+  "responses": [
+    {
+      "evidence_id": "arch-01",
+      "status": "Compliant",
+      "notes": "System architecture diagram maintained in Confluence (updated 2026-02). Includes CRM integration, email API, LLM inference endpoint, and data flow annotations."
+    },
+    {
+      "evidence_id": "arch-02",
+      "status": "Compliant",
+      "notes": "Single-agent orchestration design documented. LangChain agent with defined tool set; no multi-agent handoffs in current deployment."
+    },
+    {
+      "evidence_id": "arch-03",
+      "status": "Partial",
+      "notes": "Tool inventory exists for CRM (Salesforce API), email (SendGrid), and calendar (Google Calendar). Web search plugin added in v2.3 but not yet formally documented in inventory."
+    },
+    {
+      "evidence_id": "arch-04",
+      "status": "Non-Compliant",
+      "notes": "No formal memory architecture documentation found. Agent uses in-context memory only; no vector store or long-term memory audit trail. Gap identified — documentation required."
+    },
+    {
+      "evidence_id": "arch-05",
+      "status": "Compliant",
+      "notes": "Inter-agent communication not applicable (single agent). External API trust boundaries defined in network policy doc AC-NET-002."
+    },
+    {
+      "evidence_id": "arch-06",
+      "status": "Partial",
+      "notes": "OpenAI GPT-4o as foundation model documented. LangChain SDK version pinned. Third-party plugins (web search, PDF parser) lack full supply chain documentation from vendors."
+    },
+    {
+      "evidence_id": "iam-01",
+      "status": "Partial",
+      "notes": "Agent authenticates to Salesforce via OAuth2 service account token and to SendGrid via static API key. API key rotation policy exists (90-day) but last rotation was 147 days ago."
+    },
+    {
+      "evidence_id": "iam-02",
+      "status": "Compliant",
+      "notes": "Human user authentication via Okta SSO with MFA enforced. SAML 2.0 integration verified. Phishing-resistant MFA (WebAuthn) deployed for admin roles."
+    },
+    {
+      "evidence_id": "iam-03",
+      "status": "Non-Compliant",
+      "notes": "Agent Salesforce service account holds 'Modify All' permission on Opportunity objects. Least privilege analysis indicates read + create on owned records would suffice. Remediation ticket open."
+    },
+    {
+      "evidence_id": "iam-04",
+      "status": "Non-Compliant",
+      "notes": "No dynamic permission scoping implemented. Agent permissions are static at deployment time. No mechanism to reduce scope for low-risk vs. high-risk operations at runtime."
+    },
+    {
+      "evidence_id": "iam-05",
+      "status": "Partial",
+      "notes": "Secrets stored in AWS Secrets Manager. Automatic rotation configured for database credentials but NOT for third-party API keys (SendGrid, OpenAI). Manual rotation process documented."
+    },
+    {
+      "evidence_id": "iam-06",
+      "status": "Partial",
+      "notes": "OAuth2 tokens expire after 1 hour with refresh token rotation. No active session revocation capability — compromised refresh tokens require manual intervention. Replay prevention not validated."
+    },
+    {
+      "evidence_id": "model-01",
+      "status": "Compliant",
+      "notes": "OpenAI GPT-4o model card referenced in system documentation. Model capabilities, limitations, and safety mitigations noted. Vendor documentation link maintained in CMDB."
+    },
+    {
+      "evidence_id": "model-02",
+      "status": "Partial",
+      "notes": "Foundation model training data provenance delegated to OpenAI. No internally fine-tuned model. OpenAI DPA in place for data processing. Full training data lineage not independently verifiable."
+    },
+    {
+      "evidence_id": "model-03",
+      "status": "N/A",
+      "notes": "No fine-tuning or RLHF performed. Using base GPT-4o via API only. Not applicable to this deployment."
+    },
+    {
+      "evidence_id": "model-04",
+      "status": "Partial",
+      "notes": "Model version (gpt-4o-2024-08-06) pinned in deployment config and tracked in Git. No formal change control process for model version upgrades — handled ad-hoc by engineering."
+    },
+    {
+      "evidence_id": "model-05",
+      "status": "Partial",
+      "notes": "Basic bias testing conducted on sales messaging outputs (Q3 2025). Red-team exercise not formally documented. No ongoing automated bias monitoring in production."
+    },
+    {
+      "evidence_id": "model-06",
+      "status": "Compliant",
+      "notes": "OpenAI API access controlled via organization-scoped API keys with IP allowlisting. Keys stored in Secrets Manager. Access limited to production service account and 2 engineers."
+    },
+    {
+      "evidence_id": "sec-01",
+      "status": "Non-Compliant",
+      "notes": "No formal prompt injection defenses implemented. System prompt contains standard instructions but no privilege separation between system and user content. No input sanitization layer. High priority gap."
+    },
+    {
+      "evidence_id": "sec-02",
+      "status": "Partial",
+      "notes": "Output filtered for PII patterns (regex-based SSN, credit card detection) before sending to CRM. No grounding checks or hallucination detection. LLM outputs not validated against source data."
+    },
+    {
+      "evidence_id": "sec-03",
+      "status": "Partial",
+      "notes": "Agent runs in isolated ECS container. No outbound internet access from container (except allowlisted endpoints). Formal sandboxing policy document not produced; controls exist but undocumented."
+    },
+    {
+      "evidence_id": "sec-04",
+      "status": "Partial",
+      "notes": "VPC with security groups limits agent traffic to required endpoints. Microsegmentation not implemented — agent container shares subnet with other services. Network policy documentation exists."
+    },
+    {
+      "evidence_id": "sec-05",
+      "status": "Non-Compliant",
+      "notes": "No adversarial ML controls in place. Model inversion, poisoning, and evasion attacks not assessed. Vendor (OpenAI) provides some platform-level protections but no application-layer controls deployed."
+    },
+    {
+      "evidence_id": "sec-06",
+      "status": "Non-Compliant",
+      "notes": "Agent acts on tool outputs without validation. CRM write operations executed based on raw LLM response. No schema validation or sanity checking before Salesforce API calls are made."
+    },
+    {
+      "evidence_id": "sec-07",
+      "status": "Compliant",
+      "notes": "Agent scoped to sales data only. Data access controlled via Salesforce permission sets. PII masking applied before logging. No customer financial or health data accessible to agent."
+    },
+    {
+      "evidence_id": "human-01",
+      "status": "Partial",
+      "notes": "Human approval required for deals exceeding $50,000 (HITL checkpoint in workflow). Smaller deals processed autonomously. No HITL for outbound email campaigns regardless of size."
+    },
+    {
+      "evidence_id": "human-02",
+      "status": "Compliant",
+      "notes": "Emergency stop button in admin dashboard halts all agent tasks within 30 seconds. Rollback capability for last 24 hours of CRM changes via Salesforce recycle bin and audit log replay."
+    },
+    {
+      "evidence_id": "human-03",
+      "status": "Non-Compliant",
+      "notes": "No formal guardrails document defining autonomous action scope. Agent can send up to 500 emails/day without human confirmation. Limits are code-level constants, not formally governed."
+    },
+    {
+      "evidence_id": "human-04",
+      "status": "Compliant",
+      "notes": "All outbound emails include 'This message was drafted by an AI assistant' disclosure in footer. Agent identity disclosed in CRM activity notes. Compliant with EU AI Act transparency requirements."
+    },
+    {
+      "evidence_id": "human-05",
+      "status": "Partial",
+      "notes": "High-risk decisions (legal questions, compliance concerns) escalate to human sales rep via Slack alert. Escalation criteria defined in agent system prompt but not in formal runbook documentation."
+    },
+    {
+      "evidence_id": "gov-01",
+      "status": "Compliant",
+      "notes": "AI risk register maintained in GRC tool (ServiceNow). AI Sales Assistant listed with risk owner, risk rating (Medium), and quarterly review schedule. Last review: 2026-02-14."
+    },
+    {
+      "evidence_id": "gov-02",
+      "status": "Compliant",
+      "notes": "AI Acceptable Use Policy v2.1 approved by CISO and published company-wide (2025-11). Covers agent use cases, prohibited actions, and employee responsibilities."
+    },
+    {
+      "evidence_id": "gov-03",
+      "status": "Partial",
+      "notes": "EU AI Act risk classification assessment initiated (2026-01). Preliminary classification: Limited Risk (transparency obligations apply). Full assessment and DPA review not yet finalized."
+    },
+    {
+      "evidence_id": "gov-04",
+      "status": "Non-Compliant",
+      "notes": "No conformity assessment completed. CE marking not applicable at current risk classification but full assessment needed to confirm. Legal review pending with outside counsel."
+    },
+    {
+      "evidence_id": "gov-05",
+      "status": "Partial",
+      "notes": "OpenAI vendor security assessment completed (SOC 2 Type II reviewed). Salesforce and SendGrid vendor assessments on file. Web search plugin vendor (Serper.dev) not yet assessed."
+    },
+    {
+      "evidence_id": "gov-06",
+      "status": "Compliant",
+      "notes": "Incident Response Plan v3.2 includes AI-specific incident playbook (Appendix F). Covers prompt injection, data exfiltration, and autonomous action runaway scenarios. Last tabletop: 2025-Q4."
+    },
+    {
+      "evidence_id": "gov-07",
+      "status": "Partial",
+      "notes": "Major model version changes tracked in JIRA change tickets. Minor prompt changes and tool config updates not consistently logged. Change advisory board reviews not required for AI changes."
+    },
+    {
+      "evidence_id": "mon-01",
+      "status": "Compliant",
+      "notes": "Full agent action logs shipped to Datadog. Logs include: input prompt (truncated), tool calls made, tool responses, final output, latency, and token usage. Retention: 90 days."
+    },
+    {
+      "evidence_id": "mon-02",
+      "status": "Partial",
+      "notes": "Logs stored in Datadog with role-based access control. Logs not written to immutable storage — admin users can delete log streams. No WORM or append-only log configuration in place."
+    },
+    {
+      "evidence_id": "mon-03",
+      "status": "Partial",
+      "notes": "Datadog monitors alert on p99 latency spikes and error rate anomalies. No ML-based behavioral baseline for agent activity patterns. Volume anomalies (email floods) detected via static threshold."
+    },
+    {
+      "evidence_id": "mon-04",
+      "status": "Partial",
+      "notes": "Response latency and API error rates monitored in real-time. No model drift detection or output quality degradation monitoring. Human sales managers provide informal quality feedback weekly."
+    },
+    {
+      "evidence_id": "mon-05",
+      "status": "Non-Compliant",
+      "notes": "No explainability or interpretability outputs generated. Agent decisions are black-box — no chain-of-thought logging, rationale capture, or decision attribution. Cannot trace why a specific action was taken."
+    },
+    {
+      "evidence_id": "mon-06",
+      "status": "Partial",
+      "notes": "Agent logs forwarded to Splunk SIEM via Datadog integration. No AI-specific detection rules or parsers. Security team reviews AI logs only during incident investigations, not proactively."
+    },
+    {
+      "evidence_id": "data-01",
+      "status": "Compliant",
+      "notes": "Enterprise data classification policy applied. CRM data labeled Confidential. Agent only accesses Confidential and below — no access to Restricted (financial forecasts, M&A) data."
+    },
+    {
+      "evidence_id": "data-02",
+      "status": "Partial",
+      "notes": "Agent scoped to sales objects in Salesforce. However, full data minimization audit not performed — agent may have visibility into fields not required for its function (e.g., internal deal notes)."
+    },
+    {
+      "evidence_id": "data-03",
+      "status": "Partial",
+      "notes": "GDPR DPIA initiated for EU prospect data processing (2026-01). Privacy notice updated to include AI processing disclosure. Article 22 automated decision-making assessment not yet completed."
+    },
+    {
+      "evidence_id": "data-04",
+      "status": "Compliant",
+      "notes": "Data retention policy: conversation logs 90 days, CRM records per standard retention schedule. Automated deletion jobs configured and verified in staging. Logs purged on schedule."
+    },
+    {
+      "evidence_id": "data-05",
+      "status": "Compliant",
+      "notes": "All processing confined to AWS eu-west-1 (Ireland). OpenAI data residency addendum in place restricting training use of customer data. Cross-border transfer impact assessment completed."
+    }
+  ]
+}
