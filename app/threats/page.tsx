@@ -235,7 +235,7 @@ export default function ThreatsPage() {
                     : 'bg-slate-800/60 border-slate-700 text-slate-500'
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full bg-current ${isLive && status.ok ? 'animate-pulse' : ''}`} />
+                <span className={`w-1.5 h-1.5 rounded-full bg-current ${isLive ? 'animate-pulse' : ''}`} />
                 {source}
                 {isFetching ? ' (updating…)' : ` (${status.count})`}
                 {isLive && <span className="ml-1 opacity-50 text-[10px]">live</span>}
