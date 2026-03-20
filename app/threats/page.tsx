@@ -144,7 +144,7 @@ export default function ThreatsPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-100">Threat Intelligence</h1>
           <p className="text-slate-400 mt-1">
-            AI-specific threats from CISA KEV, MITRE ATLAS, AI Incident Database, and FireTail
+            AI-specific threats from CISA KEV, MITRE ATLAS, AI Incident Database, ENISA, IBM X-Force, Mandiant, and Verizon DBIR
           </p>
         </div>
         <div className="flex items-center gap-3">
