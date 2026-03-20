@@ -1,7 +1,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN NODE_OPTIONS="--max-old-space-size=512" npm ci
 COPY . .
 RUN npx prisma generate
 RUN npm run build
