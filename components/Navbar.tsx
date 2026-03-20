@@ -8,6 +8,7 @@ const links = [
   { href: '/', label: 'Dashboard' },
   { href: '/matrix', label: 'Evidence Matrix' },
   { href: '/tracker', label: 'Assessment Tracker' },
+  { href: 'https://threats.illuminait.io', label: 'Threat Intelligence', external: true },
   { href: '/scores', label: 'Risk Scores' },
 ]
 
@@ -24,7 +25,17 @@ export default function Navbar() {
         </Link>
         {/* Desktop */}
         <div className="hidden md:flex gap-1">
-          {links.map(l => (
+          {links.map(l => l.external ? (
+            <a
+              key={l.href}
+              href={l.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+            >
+              {l.label}
+            </a>
+          ) : (
             <Link
               key={l.href}
               href={l.href}
@@ -45,7 +56,18 @@ export default function Navbar() {
       </div>
       {open && (
         <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 py-2 flex flex-col gap-1">
-          {links.map(l => (
+          {links.map(l => l.external ? (
+            <a
+              key={l.href}
+              href={l.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="px-4 py-2 rounded-md text-sm font-medium text-slate-400"
+            >
+              {l.label}
+            </a>
+          ) : (
             <Link
               key={l.href}
               href={l.href}
