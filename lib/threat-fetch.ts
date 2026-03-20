@@ -35,7 +35,7 @@ export type ThreatCache = {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const CACHE_TTL = process.env.NODE_ENV === 'development' ? 60 : 300 // 1min dev / 5min prod — always serve stale, always refresh in background
+const CACHE_TTL = process.env.NODE_ENV === 'development' ? 300 : 3600 // 5min dev / 1hr prod — always serve stale, always refresh in background
 const ATLAS_CACHE_TTL_DAYS = 7
 const FETCH_TIMEOUT_MS = 30000
 

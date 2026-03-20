@@ -125,7 +125,7 @@ export default function ThreatsPage() {
   const { data, isLoading } = useQuery<ThreatCache>({
     queryKey: ['threats'],
     queryFn: () => fetch('/api/threats').then(r => r.json()),
-    refetchInterval: (query) => (query.state.data?.generating ? 5000 : 180000), // 5s when fetching, 3min otherwise
+    refetchInterval: (query) => (query.state.data?.generating ? 5000 : 3600000), // 5s when fetching, 1hr otherwise
   })
 
   const { data: assessments } = useQuery<AssessmentSummary[]>({
