@@ -35,7 +35,7 @@ export type ThreatCache = {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const CACHE_TTL = process.env.NODE_ENV === 'development' ? 3600 : 28800 // 1h dev / 8h prod
+const CACHE_TTL = process.env.NODE_ENV === 'development' ? 60 : 300 // 1min dev / 5min prod — always serve stale, always refresh in background
 const ATLAS_CACHE_TTL_DAYS = 7
 const FETCH_TIMEOUT_MS = 30000
 
@@ -117,9 +117,22 @@ export function getIsGenerating() { return _isFetching }
 // ── Main entry point ───────────────────────────────────────────────────────────
 
 export async function getThreats(): Promise<ThreatCache> {
-  const fresh = loadCache()
-  if (fresh) return fresh
+  const stale = loadStaleCache()
 
+  if (stale) {
+    // Always serve existing data immediately; refresh in background if expired
+    const age = (Date.now() - new Date(stale.timestamp).getTime()) / 1000
+    if (age > CACHE_TTL && !_isFetching) {
+      _isFetching = true
+      runFetch()
+        .then(({ grouped, sources_status }) => saveCache(grouped, sources_status))
+        .catch(e => console.error('[threats] Fetch error:', e))
+        .finally(() => { _isFetching = false })
+    }
+    return { ...stale, generating: _isFetching }
+  }
+
+  // No cache at all — trigger fetch and serve static sources while waiting
   if (!_isFetching) {
     _isFetching = true
     runFetch()
@@ -128,10 +141,6 @@ export async function getThreats(): Promise<ThreatCache> {
       .finally(() => { _isFetching = false })
   }
 
-  const stale = loadStaleCache()
-  if (stale) return stale
-
-  // Serve static sources immediately so the page isn't blank while live fetch runs
   const { grouped: staticGrouped, sources_status: staticStatus } = loadStaticSources()
   const pendingStatus: Record<string, SourceStatus> = {
     'CISA KEV':             { ok: false, type: 'live', count: 0, error: null },

@@ -125,7 +125,7 @@ export default function ThreatsPage() {
   const { data, isLoading } = useQuery<ThreatCache>({
     queryKey: ['threats'],
     queryFn: () => fetch('/api/threats').then(r => r.json()),
-    refetchInterval: (query) => (query.state.data?.generating ? 5000 : false),
+    refetchInterval: (query) => (query.state.data?.generating ? 5000 : 180000), // 5s when fetching, 3min otherwise
   })
 
   const { data: assessments } = useQuery<AssessmentSummary[]>({
@@ -185,22 +185,27 @@ export default function ThreatsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Threat Intelligence</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-slate-100">Threat Intelligence</h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-900/30 border border-green-800 text-green-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              LIVE
+            </span>
+          </div>
           <p className="text-slate-400 mt-1">
             AI-specific threats from CISA KEV, MITRE ATLAS, AI Incident Database, ENISA, IBM X-Force, Mandiant, and Verizon DBIR
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {data?.generating && (
+          {data?.generating ? (
             <span className="text-xs text-indigo-400 flex items-center gap-1.5">
-              <RefreshCw className="h-3 w-3 animate-spin" /> Fetching live data…
+              <RefreshCw className="h-3 w-3 animate-spin" /> Updating live feeds…
             </span>
-          )}
-          {data?.timestamp && !data?.generating && (
-            <span className="text-xs text-slate-500">
-              Updated {formatTimestamp(data.timestamp)}
+          ) : data?.timestamp ? (
+            <span className="text-xs text-slate-500 flex items-center gap-1.5">
+              Synced {formatTimestamp(data.timestamp)} · auto-refreshing
             </span>
-          )}
+          ) : null}
           <Button
             onClick={handleRefresh}
             disabled={refreshing || data?.generating}
@@ -216,19 +221,27 @@ export default function ThreatsPage() {
       {/* Source status pills */}
       {data?.sources_status && (
         <div className="flex flex-wrap gap-2">
-          {Object.entries(data.sources_status).map(([source, status]) => (
-            <span
-              key={source}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border font-mono ${
-                status.ok
-                  ? 'bg-green-900/10 border-green-900/30 text-green-500'
-                  : 'bg-amber-900/10 border-amber-900/30 text-amber-500'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {source} {status.ok ? `(${status.count})` : '(fetching…)'}
-            </span>
-          ))}
+          {Object.entries(data.sources_status).map(([source, status]) => {
+            const isLive = status.type === 'live'
+            const isFetching = isLive && !status.ok
+            return (
+              <span
+                key={source}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border font-mono ${
+                  isFetching
+                    ? 'bg-indigo-900/10 border-indigo-900/30 text-indigo-400'
+                    : status.ok && isLive
+                    ? 'bg-green-900/10 border-green-900/30 text-green-500'
+                    : 'bg-slate-800/60 border-slate-700 text-slate-500'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full bg-current ${isLive && status.ok ? 'animate-pulse' : ''}`} />
+                {source}
+                {isFetching ? ' (updating…)' : ` (${status.count})`}
+                {isLive && <span className="ml-1 opacity-50 text-[10px]">live</span>}
+              </span>
+            )
+          })}
         </div>
       )}
 
