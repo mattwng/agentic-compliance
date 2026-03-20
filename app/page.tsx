@@ -1,7 +1,8 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Plus, Shield, Calendar, Activity, Trash2, Eye } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Shield, Calendar, Activity, Trash2, Eye, ShieldAlert } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,11 +18,25 @@ type Assessment = {
   frameworkScores: Record<string, number>
 }
 
+type AlertCount = {
+  criticalCount: number
+  highCount: number
+  systemName: string
+  assessmentName: string
+  topThreats: Array<{ id: string; title: string; severity: string; source: string }>
+}
+
 export default function Home() {
   const router = useRouter()
   const { data: assessments, isLoading, refetch } = useQuery<Assessment[]>({
     queryKey: ['assessments'],
     queryFn: () => fetch('/api/assessments').then(r => r.json()),
+  })
+
+  const { data: alertData } = useQuery<AlertCount>({
+    queryKey: ['threat-alert-count'],
+    queryFn: () => fetch('/api/threats/alert-count').then(r => r.json()),
+    refetchInterval: 300000, // refresh every 5 minutes
   })
 
   const handleDelete = async (id: string) => {
@@ -75,6 +90,44 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Threat Alert */}
+      {alertData && (alertData.criticalCount > 0 || alertData.highCount > 0) && (
+        <Card className="bg-rose-950/20 border-rose-900/40">
+          <CardContent className="flex items-start gap-4 p-5">
+            <ShieldAlert className="h-6 w-6 text-rose-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <span className="font-semibold text-rose-300">Threat Alert</span>
+                {alertData.criticalCount > 0 && (
+                  <Badge className="bg-rose-900/50 text-rose-300 border-rose-800 text-xs border">{alertData.criticalCount} Critical</Badge>
+                )}
+                {alertData.highCount > 0 && (
+                  <Badge className="bg-orange-900/50 text-orange-300 border-orange-800 text-xs border">{alertData.highCount} High</Badge>
+                )}
+              </div>
+              <p className="text-sm text-slate-300 mb-3">
+                {alertData.criticalCount + alertData.highCount} active threat{alertData.criticalCount + alertData.highCount !== 1 ? 's' : ''} match open controls in{' '}
+                <span className="font-medium text-slate-100">{alertData.systemName}</span>
+              </p>
+              {alertData.topThreats.length > 0 && (
+                <ul className="space-y-1 mb-3">
+                  {alertData.topThreats.map(t => (
+                    <li key={t.id} className="text-xs text-slate-400 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />
+                      <span className="line-clamp-1">{t.title}</span>
+                      <span className="text-slate-600 ml-auto flex-shrink-0">{t.source}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link href="/threats" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                View all in Threat Intelligence →
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Assessments Table */}
       {isLoading ? (

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Shield, Menu, X } from 'lucide-react'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 const links = [
   { href: '/', label: 'Dashboard' },
@@ -15,6 +16,15 @@ const links = [
 export default function Navbar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+
+  const { data: alertData } = useQuery<{ criticalCount: number; highCount: number }>({
+    queryKey: ['threat-alert-count'],
+    queryFn: () => fetch('/api/threats/alert-count').then(r => r.json()),
+    refetchInterval: 300000,
+    staleTime: 60000,
+  })
+
+  const alertCount = (alertData?.criticalCount ?? 0)
 
   return (
     <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
@@ -29,13 +39,18 @@ export default function Navbar() {
             <Link
               key={l.href}
               href={l.href}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 pathname === l.href
                   ? 'bg-indigo-600 text-white'
                   : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
               }`}
             >
               {l.label}
+              {l.href === '/threats' && alertCount > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 text-[10px] font-bold rounded-full bg-rose-500 text-white leading-none">
+                  {alertCount > 9 ? '9+' : alertCount}
+                </span>
+              )}
             </Link>
           ))}
         </div>
@@ -51,11 +66,16 @@ export default function Navbar() {
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
+              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${
                 pathname === l.href ? 'bg-indigo-600 text-white' : 'text-slate-400'
               }`}
             >
               {l.label}
+              {l.href === '/threats' && alertCount > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 text-[10px] font-bold rounded-full bg-rose-500 text-white leading-none">
+                  {alertCount > 9 ? '9+' : alertCount}
+                </span>
+              )}
             </Link>
           ))}
         </div>

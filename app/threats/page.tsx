@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, ExternalLink, AlertCircle, ShieldAlert } from 'lucide-react'
 import type { ThreatCache, ThreatEntry, ThreatSeverity } from '@/lib/threat-fetch'
 import { EVIDENCE } from '@/lib/evidence-data'
+import { DOMAIN_THREAT_TAGS, buildGappedDomains, getRelevantThreats } from '@/lib/threat-alerts'
 
 // ── Severity helpers ───────────────────────────────────────────────────────────
 
@@ -22,18 +23,7 @@ const SEV_CONFIG: Record<ThreatSeverity, { label: string; dot: string; badge: st
 
 const SEV_ORDER: ThreatSeverity[] = ['critical', 'high', 'medium', 'low', 'info']
 
-// ── Domain → threat tag mapping for assessment gap correlation ─────────────────
-
-const DOMAIN_THREAT_TAGS: Record<string, string[]> = {
-  'System Architecture & Design':           ['supply-chain', 'architecture', 'atlas', 'mitre'],
-  'Identity, Access & Privilege':           ['credential-theft', 'api-key', 'x-force', 'ibm'],
-  'AI Model & Training Provenance':         ['data-poisoning', 'supply-chain', 'model-weights', 'ip-theft', 'ml', 'nation-state', 'espionage', 'llm'],
-  'Security Controls & Threat Mitigations': ['prompt-injection', 'llm', 'ai-attack', 'atlas', 'mitre', 'cve', 'exploited', 'recon', 'exploitation', 'phishing', 'social-engineering', 'deepfake', 'bec'],
-  'Human Oversight & Control':              ['autonomous-agents', 'agentic-ai', 'ai-incident', 'safety'],
-  'Governance, Risk & Compliance':          ['annual-report', 'nation-state', 'espionage', 'ip-theft'],
-  'Monitoring & Audit':                     ['ai-incident', 'aiid', 'agentic-ai'],
-  'Data Protection & Privacy':              ['ip-theft', 'data-poisoning', 'espionage'],
-}
+// DOMAIN_THREAT_TAGS, buildGappedDomains, getRelevantThreats imported from lib/threat-alerts
 
 type AssessmentSummary = {
   id: string
@@ -153,23 +143,11 @@ export default function ThreatsPage() {
     if (!assessmentFilter || !assessments) return new Set<string>()
     const assessment = assessments.find(a => a.id === assessmentFilter)
     if (!assessment) return new Set<string>()
-    const gapped = new Set<string>()
-    for (const r of assessment.responses) {
-      if (r.status === 'Non-Compliant' || r.status === 'Partial') {
-        const evidence = EVIDENCE.find(e => e.id === r.evidenceId)
-        if (evidence) gapped.add(evidence.domain)
-      }
-    }
-    return gapped
+    return buildGappedDomains(assessment.responses)
   }, [assessmentFilter, assessments])
 
   const isRelevantToGaps = useCallback((threat: ThreatEntry): boolean => {
-    if (gappedDomains.size === 0) return false
-    for (const [domain, tags] of Object.entries(DOMAIN_THREAT_TAGS)) {
-      if (!gappedDomains.has(domain)) continue
-      if (threat.tags.some(t => tags.includes(t))) return true
-    }
-    return false
+    return getRelevantThreats([threat], gappedDomains).length > 0
   }, [gappedDomains])
 
   const filtered = useMemo(() => {

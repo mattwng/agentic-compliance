@@ -1,24 +1,24 @@
 # Agentic AI Compliance Evaluator — Customer Demo Script
 
 **Audience:** Security, Risk, or AI governance stakeholders at a prospect or customer organization
-**Duration:** 20–30 minutes
-**Goal:** Demonstrate how the platform surfaces compliance gaps across the major agentic AI security frameworks and shows how live threat intelligence can dynamically recalibrate risk priorities
+**Duration:** 25–35 minutes
+**Goal:** Demonstrate how the platform surfaces compliance gaps, maps live threat intelligence to assessment findings, and proactively alerts on threats that match your specific risk posture
 **Pre-loaded demo:** "AI Sales Assistant — Enterprise Edition" at 60% Medium Risk
 
 ---
 
 ## Before You Start
 
-- Open the app in a browser: `http://compliance.illuminait.io` (or `http://192.168.68.108:3005`)
-- Have the threats CSV export ready: `~/Desktop/threats_export.csv`
+- Open the app in a browser: `https://compliance.illuminait.io`
 - Land on the **Dashboard** page — this is your opening view
+- Confirm the red **Threat Alert** card is visible below the summary cards
 
 ---
 
 ## Act 1 — Setting the Scene (2 min)
 
 > **Talking Point:**
-> *"One of the fastest-evolving challenges in AI security right now is that the frameworks for evaluating agentic AI systems are fragmented — you've got NIST AI RMF, EU AI Act, OWASP LLM Top 10, MITRE ATLAS, CSA Agentic IAM, and more. Most organizations are trying to track compliance across all of these in spreadsheets. This platform consolidates that into a single structured evaluation that produces a scored, auditable result."*
+> *"One of the fastest-evolving challenges in AI security right now is that the frameworks for evaluating agentic AI systems are fragmented — you've got NIST AI RMF, EU AI Act, OWASP LLM Top 10, MITRE ATLAS, CSA Agentic IAM, and more. Most organizations are trying to track compliance across all of these in spreadsheets. This platform consolidates that into a single structured evaluation that produces a scored, auditable result — and connects it to live threat intelligence."*
 
 **Action:** Let the Dashboard load and pause on the summary cards at the top.
 
@@ -30,78 +30,115 @@
 
 ---
 
-## Act 2 — Evidence Matrix: The Methodology (4 min)
+## Act 2 — The Threat Alert: Proactive Intelligence (3 min)
+
+> **This is the new opening hook — lead with it.**
+
+**Action:** Point to the red **Threat Alert** card on the Dashboard.
 
 > **Talking Point:**
-> *"Before we look at the score, let me show you what's actually being evaluated — because credibility starts with the evidence model."*
+> *"The first thing the dashboard does is tell you about threats that are active right now — and that match gaps in your specific assessment. This isn't a generic alert feed. These are threats from CISA, MITRE ATLAS, ENISA, and IBM X-Force that map directly to the controls this system failed."*
 
-**Action:** Click **Evidence Matrix** in the sidebar.
+**Point out:**
+- The **Critical** and **High** badge counts
+- The top 3 threat titles listed under the alert
+- *"These are real entries from CISA's Known Exploited Vulnerabilities feed and MITRE ATLAS. The platform matched them to this system's gaps automatically."*
+- Click **"View all in Threat Intelligence →"** to transition to the next act
+
+---
+
+## Act 3 — Threat Intelligence: The Live Feed (4 min)
+
+**Action:** Click **Threat Intelligence** in the top nav. Notice the **red badge** on the nav link — that's the critical threat count persisting across every page.
+
+> **Talking Point:**
+> *"The Threat Intelligence page aggregates AI-specific threats from seven sources: CISA KEV, MITRE ATLAS, the AI Incident Database, ENISA's annual threat landscape, IBM X-Force, Google Mandiant, and Verizon DBIR. The page opens filtered to Critical by default so you're always looking at the highest-priority items first."*
+
+### What to Show
+
+1. **Source status pills** — green pills show each active source with a live count. Point to the variety: live feeds (CISA, MITRE) and curated static sources (ENISA, Mandiant).
+
+2. **Timestamp** — point to "Updated [date/time]". *"Data is cached for 8 hours, then re-fetched automatically. You can force a refresh at any time."*
+
+3. **Assessment context — the key feature:**
+   - Open the **"No assessment context"** dropdown in the filters row
+   - Select **AI Sales Assistant — Enterprise Edition**
+   - The amber **"Relevant to gaps (N)"** button appears
+   - *"The platform just mapped every threat in the feed against the Non-Compliant and Partial controls in this assessment. These aren't random threats — they're the ones that exploit the specific gaps this system has."*
+   - Click **"Relevant to gaps (N)"** to filter
+   - Walk through 2–3 cards that have the amber **"Relevant to gaps"** badge
+
+4. **The banner** — point to the amber context banner listing the gapped domains.
+   - *"You can see exactly which domains are exposed — Security Controls, Human Oversight, Monitoring. Those are the domains with open controls, and these are the threats that target them."*
+
+5. **A threat card in detail:**
+   - Click through to one threat (external link icon)
+   - *"Every card links to the primary source — CISA advisory, MITRE ATLAS technique, or the original report. Full provenance."*
+
+> **Talking Point:**
+> *"Most threat intel platforms give you a feed. This gives you a feed filtered to your posture. The difference is signal versus noise."*
+
+---
+
+## Act 4 — Evidence Matrix: The Methodology (3 min)
+
+> **Talking Point:**
+> *"Before we look at the full score, let me show you what's actually being evaluated — because credibility starts with the evidence model."*
+
+**Action:** Click **Evidence Matrix** in the top nav.
 
 ### What to Show
 
 1. **The breadth statement:** Point to the header — *"48 evidence items × 10 frameworks × 8 domains."* This is what's under the hood of the score.
 
 2. **Filter by framework:** Click the **OWASP Agentic AI** pill.
-   - The table dims every row except that framework.
-   - Walk across the columns: *"Every column is a security domain — Identity, Security Controls, Human Oversight. OWASP Agentic AI maps evidence requirements across all of them."*
+   - *"Every column is a security domain. OWASP Agentic AI maps evidence requirements across all of them."*
    - Click **Clear** to reset.
 
 3. **Filter by domain:** Click the **Security Controls & Threat Mitigations** domain pill.
-   - *"This domain carries the highest weight in the scoring model — 20%. Every framework that has something to say about security controls is represented here: sandboxing, prompt injection defenses, output validation, adversarial ML."*
+   - *"This domain carries the highest weight in the scoring model — 20%. Every framework that has something to say about security controls is represented here."*
    - Click **Clear** to reset.
 
-4. **The export:** Click **Export CSV**.
-   - *"Customers can pull this matrix as a CSV to share with their audit or legal teams. It gives them the full evidence inventory with framework mappings pre-done."*
-
-> **Talking Point:**
-> *"The important thing here is that this isn't our opinion of what should be evaluated — these 48 items are derived directly from the published frameworks. NIST AI RMF, EU AI Act, Google SAIF. We've done the mapping work so you don't have to."*
+4. **Export:** Click **Export CSV**.
+   - *"Customers can pull this matrix as a CSV to share with audit or legal teams."*
 
 ---
 
-## Act 3 — The Tracker: How an Assessment Is Conducted (5 min)
+## Act 5 — The Tracker: How an Assessment Is Conducted (4 min)
 
 > **Talking Point:**
-> *"Now let's look at how an assessment gets done. Our pre-loaded demo is an AI sales assistant — a customer-facing chatbot that helps sales reps qualify leads and pull pricing. Exactly the kind of system that's being deployed rapidly right now without a clear security evaluation process."*
+> *"Now let's look at how an assessment gets populated. In practice, your automated discovery tool outputs a JSON file. The platform ingests it directly."*
 
-**Action:** Click **Tracker** in the sidebar. Then click the **Edit** button on the "AI Sales Assistant — Enterprise Edition" row from the Dashboard, or navigate to `/tracker?assessmentId=<id>`.
+**Action:** Click **Assessment Tracker** in the top nav, then click **New Assessment**.
 
 ### What to Show
 
-1. **Assessment metadata:** Point to the System Name, Assessment Name, and Notes fields.
-   - *"Every assessment is tied to a specific AI system and a specific review cycle. This one is a pre-deployment review for Q1 2025."*
+1. **Import JSON button** — point to it in the header.
+   - *"Your discovery tool runs against the AI system and produces a JSON file mapping each of the 48 evidence IDs to a compliance status and a finding note. You import that here. The form populates instantly — no manual entry."*
+   - Click **Template** to download the schema.
+   - *"This is the schema we publish to the discovery tool team. They output to this format, we ingest it."*
 
-2. **Progress bar:**
-   - *"Out of 48 items, 48 have been rated. The progress bar gives the assessor a real-time completion signal."*
+2. **Manual editing** — after import, show a dropdown and notes field.
+   - *"The assessor can review and override any finding. The import is a starting point, not a locked result. Human judgment stays in the loop."*
 
-3. **Evidence table walkthrough — pick 3 items to narrate:**
+3. **Click back to Dashboard**, then Edit the **AI Sales Assistant** assessment to show a completed example.
+
+4. **Evidence table walkthrough — pick 2–3 items to narrate:**
 
    **Item 1 — Security Controls (sec-03): Sandboxing** *(Non-Compliant)*
-   > *"The agent runs in a shared AWS ECS task with no process-level isolation. When it calls the CRM or generates email drafts, those happen in the same execution context. The assessor rated this Non-Compliant — the frameworks are clear that agentic tool invocations should be sandboxed."*
+   > *"The agent runs in a shared AWS ECS task with no process-level isolation. Non-Compliant — the frameworks are clear that agentic tool invocations should be sandboxed."*
 
-   **Item 2 — Human Oversight (human-04): Transparency to end users** *(Compliant)*
-   > *"Here's a green — the chat widget displays an AI disclosure banner on every session, reviewed by legal. This is a required transparency control under EU AI Act. They got this one right."*
+   **Item 2 — Human Oversight (human-04): Transparency** *(Compliant)*
+   > *"The chat widget displays an AI disclosure banner on every session, reviewed by legal. Required under EU AI Act. They got this one right."*
 
-   **Item 3 — Governance (gov-01): AI risk register** *(Compliant)*
-   > *"Risk register entry AIR-2025-003 was created, reviewed, and signed off by the CISO. This is the governance foundation — without it, nothing else in the assessment has organizational backing."*
-
-4. **Filters:**
-   - Use the **Domain** dropdown to filter to `Security Controls & Threat Mitigations`.
-   - *"An assessor can work through one domain at a time, which is useful when you have a subject matter expert for each area."*
-   - Clear the filter.
-
-5. **Framework filter:**
-   - Filter to `EU AI Act`.
-   - *"If your primary concern is EU AI Act compliance — maybe you have European customers — you can scope the assessment to just those items. Same evidence data, different lens."*
-   - Clear the filter.
-
-> **Talking Point:**
-> *"The notes field on every item is key. This isn't just a checkbox — it's an evidence record. 'How do we know this is Compliant? Here's the specific control, document, or test result.' That's what holds up in an audit."*
+   **Item 3 — Monitoring (mon-06): SIEM integration** *(Non-Compliant)*
+   > *"Agent events are not forwarded to the SIEM. Security ops has no visibility. This is one of the gaps the threat intelligence just flagged — and it's exactly why the Mandiant threat about AI recon appears as Relevant."*
 
 ---
 
-## Act 4 — Risk Scores: The Findings (6 min)
+## Act 6 — Risk Scores: The Findings (5 min)
 
-**Action:** Click **Calculate Scores** (or navigate to **Scores** in the sidebar and select the AI Sales Assistant assessment from the dropdown).
+**Action:** Click **Risk Scores** in the top nav, select the AI Sales Assistant assessment.
 
 ### What to Show
 
@@ -110,95 +147,49 @@
 - Land on the **60% — Medium Risk** amber score card.
 
 > **Talking Point:**
-> *"60% puts this system in the Medium Risk zone. Amber. This organization has done real work — they have governance, their model provenance is documented, they understand what the AI is and where it came from. But the security controls and observability are not where they need to be before this system goes in front of customers."*
-
-> *"The threshold is 75% for Low Risk. They're 15 points away. That gap is the roadmap."*
+> *"60% is amber — Medium Risk. This org has done real governance work, but the operational security controls aren't there yet. The threshold for Low Risk is 75%. That 15-point gap is the remediation roadmap."*
 
 #### Framework Scores Breakdown
 
-Scroll down to the **Framework Scores** bar chart. Walk through the top and bottom scores:
-
 **Top performers:**
-- **CSA Agentic IAM — 73%** → *"Identity and access are well-managed. Okta SSO, MFA, AWS Secrets Manager with rotation. The IAM fundamentals are there."*
-- **EU AI Act — 70% / NIST AI 600-1 — 70%** → *"The governance frameworks score highest. Risk register, acceptable use policy, vendor assessments, change management. These are policy controls and this org has strong policy."*
-- **NIST AI RMF — 66%** → *"Model provenance is strong — full model card, version pinning, red team results on file. NIST AI RMF rewards that."*
+- **CSA Agentic IAM — 73%** → *"IAM fundamentals are solid. Okta SSO, MFA, AWS Secrets Manager."*
+- **EU AI Act — 70%** → *"Strong policy layer — risk register, acceptable use policy, CISO sign-off."*
 
 **Biggest gaps:**
-- **OWASP Agentic AI — 48%** → *"OWASP Agentic AI is the most operationally demanding framework. It requires sandboxing, tool output validation, dynamic permission scoping, kill-switch with rollback. This system has gaps in all of those."*
-- **NIST SP 800-207/A — 47%** → *"Zero Trust for AI. No microsegmentation on agent traffic, no runtime privilege reduction, no SIEM integration. Classic infrastructure security debt."*
-- **MITRE ATLAS — 42%** → *"The adversarial ML framework. No adversarial testing, no anomaly detection, no explainability layer. If someone actively tries to abuse this agent, there's no detection and no forensic capability."*
+- **OWASP Agentic AI — 48%** → *"Most operationally demanding framework. Sandboxing, tool output validation, dynamic scoping — all gaps."*
+- **MITRE ATLAS — 42%** → *"No adversarial testing, no anomaly detection, no explainability. If someone targets this agent, there's no detection capability."*
 
 > **Talking Point:**
-> *"What's interesting here is the spread — 73% down to 42%. This organization isn't uniformly unprepared. They've invested in governance and identity. The gap is in the operational security layer — the runtime controls, the observability, the adversarial hardening. That tells you exactly where to focus."*
-
-#### Show Trend (if multiple assessments exist)
-
-Click **Show Trend** button.
-- *"As assessments are conducted over time, the platform builds a compliance trend line. This is how you show the board that the risk posture is improving — or flag that it isn't."*
+> *"The spread from 73% to 42% tells you this isn't uniform unprepared-ness. The governance is there. The runtime operational security is not. That's exactly where the threat intelligence is pointing too — the same gaps."*
 
 #### Export
 
-Click **Export** (CSV button).
-- *"Every assessment result is exportable to CSV for reporting. Framework scores and risk levels in a format that drops straight into an executive report or a remediation tracker."*
+Click **Export CSV** — *"Drops straight into an executive report or remediation tracker."*
 
 ---
 
-## Act 5 — The Intelligence Layer: Threat-Driven Weight Recalibration (6 min)
+## Act 7 — Intelligence Layer: Threat-Driven Weight Recalibration (3 min)
 
-> **This is the differentiating moment of the demo.**
-
-> **Talking Point:**
-> *"Here's where this platform goes beyond a static checklist. The domain weights that drive the scoring model — Security Controls at 20%, Human Oversight at 18%, and so on — those defaults are based on published framework guidance. But the actual threat landscape changes. What if we could tie the weights directly to observed attacks against AI systems right now?"*
-
-**Action:** Stay on the **Scores** page, scroll down to **Domain Weight Configuration**.
-
-1. Point out the current weights as a bar chart.
-   - *"Security Controls is currently weighted at 20% — the highest. But is that still right given what's happening in the threat landscape this week?"*
-
-2. Click **Import Threat CSV**.
-   - Select `~/Desktop/threats_export.csv`.
-   - *"This is a live export from our AI threat intelligence feed — threats.illuminait.io. 236 threats aggregated from CISA, MITRE, CVE databases, and AI security research. Each threat has a severity rating: Critical, High, Medium, Low."*
-
-3. Wait for the **amber preview** to appear.
-   - Point to any domain that changed.
-   - *"The platform reads through each threat's title, description, tags, and summary and maps it to the relevant security domain using keyword matching. Then it weights by severity — Critical threats count 4x more than Low threats. The result is a weight distribution that reflects where attacks are actually concentrated in the current threat landscape."*
-
-4. Point to the amber values.
-   - *"Amber values are weights that changed from the current configuration. These aren't just our opinion — they're derived from 236 real-world threat entries."*
-
-5. Click **Confirm Import**.
-   - *"Now every existing and future assessment scores against these recalibrated weights. If the threat data shows AI monitoring and observability are being actively exploited — that domain's weight goes up, and a system with gaps there takes a harder hit on its score."*
+**Action:** Scroll down to **Domain Weight Configuration** on the Scores page.
 
 > **Talking Point:**
-> *"Most compliance frameworks are updated annually at best. Threats move daily. The ability to recalibrate your compliance weights from live threat intelligence is what keeps the scoring model from becoming stale. You're not measuring against where risks were two years ago — you're measuring against where they are today."*
+> *"The domain weights that drive scoring — Security Controls at 20%, Human Oversight at 18% — are based on published framework guidance. But threats move faster than frameworks. The Import Threat CSV feature lets you recalibrate those weights based on where attacks are actually concentrated right now."*
 
-6. **Reset Defaults** button — point to it.
-   - *"You can always reset back to the framework-guided defaults with one click. Nothing is permanent."*
+1. Click **Import Threat CSV** — import a CSV exported from the Threat Intelligence page.
+2. Point to the amber preview values.
+   - *"Amber values changed from the defaults. These reflect the current threat distribution — more weight to the domains under active attack."*
+3. Click **Confirm Import**.
+   - *"Every assessment now scores against these live-calibrated weights."*
+4. Point to **Reset Defaults** — *"Always reversible."*
 
 ---
 
-## Act 6 — Starting a New Assessment (2 min, optional)
-
-> **Use this section if the customer wants to see the full workflow from scratch.**
-
-**Action:** Click **New Assessment** from the Dashboard.
-
-1. Fill in System Name: *"Let's say we're evaluating an AI code review assistant."*
-2. Fill in Assessment Name: *"Q2 2025 Initial Review"*
-3. Show how the progress bar starts at 0 / 48.
-4. Rate 2–3 items to show the real-time color coding (green/amber/red dropdown).
-5. Show **Save** to persist a draft without calculating.
-6. Show **Calculate Scores** to immediately produce a scored result.
-   - *"You don't have to rate all 48 items before seeing a score. Rate 20 items, calculate, and you already have a directional view."*
-
----
-
-## Act 7 — Closing (2 min)
+## Act 8 — Closing (2 min)
 
 > **Talking Point:**
-> *"What we've walked through today is the full evaluation lifecycle for an agentic AI system. You intake a system, rate it against 48 evidence items derived from 10 major security and AI governance frameworks, get a scored result broken down by framework and domain, and then connect it to live threat intelligence to keep the weights current.*
+> *"What we've walked through today is the full lifecycle: discover → assess → score → connect to live threats. The platform tells you your risk posture across 10 frameworks, which specific controls are open, and which active threats in the wild target those exact gaps — proactively, on the dashboard, before you even open the threat feed.*
 >
-> *The output is actionable: you know your overall risk posture, you know which frameworks you're strongest and weakest in, and you know which specific evidence items to remediate first. And every assessment creates an audit record — timestamped, scored, with assessor notes attached to every item.*
+> *The output is an audit record: timestamped, scored, with assessor notes on every item, connected to the threat intelligence that was active at the time of the assessment.*
 >
 > *What AI systems in your environment would you want to run through this first?"*
 
@@ -211,10 +202,10 @@ Click **Export** (CSV button).
 | Evidence items | 48 |
 | Security frameworks | 10 |
 | Security domains | 8 |
+| Threat sources | 7 (CISA KEV, MITRE ATLAS, AIID, ENISA, IBM X-Force, Mandiant, Verizon DBIR) |
 | Demo system overall score | 60% (Medium Risk) |
 | Highest framework score | CSA Agentic IAM — 73% |
 | Lowest framework score | MITRE ATLAS — 42% |
-| Threat CSV rows | 236 threats |
 | Low Risk threshold | ≥ 75% |
 | Medium Risk range | 50–74% |
 | High Risk threshold | < 50% |
@@ -224,19 +215,22 @@ Click **Export** (CSV button).
 ## Common Customer Questions
 
 **"How are the framework weights decided?"**
-> The default weights are calibrated to reflect the risk emphasis in published framework guidance — Security Controls is highest at 20% because it appears in the most frameworks and carries the most controls. You can override them at any time using the threat CSV import, or manually reset to defaults.
+> The default weights are calibrated to reflect the risk emphasis in published framework guidance — Security Controls is highest at 20%. You can override them using the threat CSV import, or manually reset to defaults.
+
+**"How does the threat-to-assessment mapping work?"**
+> Each threat has tags (e.g., `prompt-injection`, `credential-theft`, `autonomous-agents`). Each compliance domain has a set of tags that indicate exposure. The platform checks if any threat tag matches the tags for a domain that has Non-Compliant or Partial controls. If yes, the threat is flagged as relevant to that assessment.
+
+**"How current is the threat intelligence?"**
+> CISA KEV, MITRE ATLAS, and the AI Incident Database are fetched live and cached for 8 hours. ENISA, IBM X-Force, Mandiant, and Verizon DBIR are curated entries from their most recent published reports. Hit Refresh to force a live update at any time.
 
 **"How long does an assessment take?"**
-> A thorough assessment with evidence notes takes 2–4 hours for a single AI system with a knowledgeable subject matter expert. A rapid pass — just statuses, no notes — can be done in under an hour. The filters let you divide the work by domain so different team members can own their area.
-
-**"What happens when a system scores below 50%?"**
-> The system is flagged High Risk (red). The framework score breakdown immediately shows which standards are driving the score down so the remediation path is clear. You can re-run the assessment after remediations to track progress.
+> With the discovery tool JSON import, the base data populates instantly. Human review and notes typically take 1–2 hours for a knowledgeable assessor. Without the tool, a full manual assessment takes 2–4 hours.
 
 **"Can we assess multiple AI systems?"**
-> Yes. The dashboard supports unlimited assessments across different systems. The trend view and historical records are per-assessment, so each system has its own compliance trajectory.
-
-**"Is this connected to threats.illuminait.io automatically?"**
-> Currently the threat CSV is imported on-demand — you export from threats.illuminait.io and import here. An automated sync is on the roadmap.
+> Yes. The dashboard supports unlimited assessments across different systems with independent scoring and trend history per system.
 
 **"What about fine-grained controls — can we add custom evidence items?"**
-> The current evidence model is based on the published frameworks. Custom evidence items and domain customization are planned features. For now, the 48 items cover the critical surface area that the major frameworks agree on.
+> The current evidence model is based on the published frameworks. Custom evidence items and domain customization are planned features. The 48 items cover the critical surface area that the major frameworks agree on.
+
+**"What happens when a system scores below 50%?"**
+> Flagged High Risk (red). The framework breakdown immediately shows which standards are driving the score down so the remediation path is clear. Re-run after remediations to track improvement.
