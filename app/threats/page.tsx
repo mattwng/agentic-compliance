@@ -143,7 +143,7 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
 
         {displayDesc && (
           <div>
-            <p className={`text-xs text-slate-400 leading-relaxed ${!descExpanded && isLong ? 'line-clamp-2' : ''}`}>
+            <p className={`text-xs text-slate-200 leading-relaxed ${!descExpanded && isLong ? 'line-clamp-2' : ''}`}>
               {displayDesc}
             </p>
             {isLong && (
