@@ -204,8 +204,6 @@ export async function getThreats(): Promise<ThreatCache> {
     'CISA Advisories':       { ok: false, type: 'live', count: 0, error: null },
     'PyPA Advisories':       { ok: false, type: 'live', count: 0, error: null },
     'Snyk':                  { ok: false, type: 'live', count: 0, error: null },
-    'Datadog Security Labs': { ok: false, type: 'live', count: 0, error: null },
-    'Socket.dev':            { ok: false, type: 'live', count: 0, error: null },
     'OSV':                   { ok: false, type: 'live', count: 0, error: null },
   }
   return {
@@ -228,15 +226,13 @@ async function runFetch(): Promise<{ grouped: Record<string, ThreatEntry[]>; sou
     fetchCisaAdvisories(),      // 5 — News & Advisories
     fetchPyPAAdvisories(),      // 6 — News & Advisories
     fetchSnyk(),                // 7 — Supply Chain
-    fetchDatadogSecurityLabs(), // 8 — Supply Chain
-    fetchSocketDev(),           // 9 — Supply Chain
-    fetchOSV(),                 // 10 — Supply Chain
+    fetchOSV(),                 // 8 — Supply Chain
   ])
 
   const sources = [
     'CISA KEV', 'AI Incident Database', 'MITRE ATLAS', 'GitHub Issues',
     'The Hacker News', 'CISA Advisories', 'PyPA Advisories',
-    'Snyk', 'Datadog Security Labs', 'Socket.dev', 'OSV',
+    'Snyk', 'OSV',
   ]
   const grouped: Record<string, ThreatEntry[]> = {}
   const sources_status: Record<string, SourceStatus> = {}
@@ -489,17 +485,32 @@ async function fetchGithubIssues(): Promise<[ThreatEntry[], SourceStatus]> {
 
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     const repos = GITHUB_AI_REPOS.map(r => `repo:${r}`).join(' ')
-    const q = encodeURIComponent(`is:issue label:security ${repos} created:>=${since}`)
-    const url = `https://api.github.com/search/issues?q=${q}&sort=created&order=desc&per_page=30`
 
-    const resp = await fetch(url, { headers, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
-    if (!resp.ok) {
-      const msg = resp.status === 403
-        ? 'GitHub rate limit exceeded — set GITHUB_TOKEN env var for higher limits'
-        : `HTTP ${resp.status}`
-      throw new Error(msg)
+    // Two complementary queries: label-based + CVE-in-title
+    // Merged and deduplicated to maximise coverage without relying on a single label convention
+    const queries = [
+      `is:issue label:security ${repos} created:>=${since}`,
+      `is:issue CVE in:title ${repos} created:>=${since}`,
+    ]
+
+    const allItems: GithubIssue[] = []
+    const seen = new Set<string>()
+
+    for (const q of queries) {
+      const url = `https://api.github.com/search/issues?q=${encodeURIComponent(q)}&sort=created&order=desc&per_page=30`
+      const resp = await fetch(url, { headers, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+      if (resp.status === 403) throw new Error('GitHub rate limit exceeded — set GITHUB_TOKEN env var')
+      if (!resp.ok) continue
+      const data = await resp.json() as { items: GithubIssue[] }
+      for (const item of data.items ?? []) {
+        if (!seen.has(item.html_url)) {
+          seen.add(item.html_url)
+          allItems.push(item)
+        }
+      }
     }
-    const data = await resp.json() as { items: GithubIssue[] }
+
+    const data = { items: allItems }
 
     const entries: ThreatEntry[] = (data.items ?? []).map(issue => {
       const labelNames = issue.labels.map(l => l.name.toLowerCase())

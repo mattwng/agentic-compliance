@@ -135,8 +135,10 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
           <span className="text-xs text-slate-600" title={formatDate(threat.published)}>{formatAge(threat.published)}</span>
         </div>
 
-        {threat.description && (
-          <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{threat.description}</p>
+        {(threat.description?.trim() || threat.vulnerability_summary?.trim()) && (
+          <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+            {threat.description?.trim() || threat.vulnerability_summary}
+          </p>
         )}
 
         {threat.tags.length > 0 && (
@@ -165,6 +167,9 @@ function ThreatSection({
   sectionSources,
   isRelevant,
   generating,
+  localSevFilter,
+  onLocalSevChange,
+  totalBeforeLocalFilter,
 }: {
   title: string
   description: string
@@ -175,6 +180,9 @@ function ThreatSection({
   sectionSources: Set<string>
   isRelevant: (t: ThreatEntry) => boolean
   generating: boolean
+  localSevFilter?: string
+  onLocalSevChange?: (s: string) => void
+  totalBeforeLocalFilter?: number
 }) {
   const sectionStatus = Object.entries(sourcesStatus).filter(([src]) => sectionSources.has(src))
   const anyFetching = generating && sectionStatus.some(([, s]) => s.type === 'live' && !s.ok)
@@ -182,13 +190,13 @@ function ThreatSection({
   return (
     <div className="space-y-4">
       {/* Section header */}
-      <div className={`flex items-start gap-3 pb-3 border-b border-slate-800`}>
+      <div className="flex items-start gap-3 pb-3 border-b border-slate-800">
         <div className={`mt-0.5 ${accentColor}`}>{icon}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
             <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
-              {threats.length} {threats.length === 1 ? 'result' : 'results'}
+              {threats.length}{totalBeforeLocalFilter !== undefined && localSevFilter !== 'all' ? ` of ${totalBeforeLocalFilter}` : ''} {threats.length === 1 ? 'result' : 'results'}
             </span>
             {anyFetching && (
               <span className="text-xs text-indigo-400 flex items-center gap-1">
@@ -198,6 +206,27 @@ function ThreatSection({
           </div>
           <p className="text-xs text-slate-500 mt-0.5">{description}</p>
         </div>
+        {/* Per-section severity selector (Threat Intel only) */}
+        {onLocalSevChange && (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {(['critical', 'high', 'all'] as const).map(s => {
+              const cfg = s !== 'all' ? SEV_CONFIG[s] : null
+              return (
+                <button
+                  key={s}
+                  onClick={() => onLocalSevChange(s)}
+                  className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                    localSevFilter === s
+                      ? cfg ? cfg.filter + ' ring-1 ring-current' : 'bg-indigo-600 text-white border-indigo-500'
+                      : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-600'
+                  }`}
+                >
+                  {s === 'all' ? 'All' : cfg!.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Per-section source pills */}
@@ -230,6 +259,7 @@ function ThreatSection({
 export default function ThreatsPage() {
   const qc = useQueryClient()
   const [sevFilter, setSevFilter] = useState<string>('all')
+  const [threatIntelSev, setThreatIntelSev] = useState<string>('critical')
   const [sourceFilter, setSourceFilter] = useState<string>('')
   const [search, setSearch] = useState('')
   const [refreshing, setRefreshing] = useState(false)
@@ -278,7 +308,8 @@ export default function ThreatsPage() {
   }, [allThreats, sevFilter, sourceFilter, search, relevantOnly, isRelevantToGaps])
 
   // Per-section filtered subsets
-  const threatIntelThreats   = useMemo(() => filtered.filter(t => THREAT_INTEL_SOURCES.has(t.source)), [filtered])
+  const threatIntelAll       = useMemo(() => filtered.filter(t => THREAT_INTEL_SOURCES.has(t.source)), [filtered])
+  const threatIntelThreats   = useMemo(() => threatIntelAll.filter(t => threatIntelSev === 'all' || t.severity === threatIntelSev), [threatIntelAll, threatIntelSev])
   const newsThreats          = useMemo(() => filtered.filter(t => NEWS_SOURCES.has(t.source)), [filtered])
   const supplyChainThreats   = useMemo(() => filtered.filter(t => SUPPLY_CHAIN_SOURCES.has(t.source)), [filtered])
 
@@ -458,20 +489,7 @@ export default function ThreatsPage() {
       ) : (
         <div className="space-y-12">
 
-          {/* ── Section 1: Threat Intelligence ────────────────────────────── */}
-          <ThreatSection
-            title="Threat Intelligence"
-            description="CVEs, adversarial ML techniques, AI system incidents, and curated annual threat reports"
-            icon={<Shield className="h-5 w-5" />}
-            accentColor="text-indigo-400"
-            threats={threatIntelThreats}
-            sourcesStatus={sourcesStatus}
-            sectionSources={THREAT_INTEL_SOURCES}
-            isRelevant={isRelevantToGaps}
-            generating={generating}
-          />
-
-          {/* ── Section 2: Latest News & Advisories ───────────────────────── */}
+          {/* ── Section 1: Latest News & Advisories ───────────────────────── */}
           <ThreatSection
             title="Latest News & Advisories"
             description="Breaking security news, official government advisories, and Python package security alerts"
@@ -484,7 +502,7 @@ export default function ThreatsPage() {
             generating={generating}
           />
 
-          {/* ── Section 3: Supply Chain & Package Security ────────────────── */}
+          {/* ── Section 2: Supply Chain & Package Security ────────────────── */}
           <ThreatSection
             title="Supply Chain & Package Security"
             description="Open source dependency vulnerabilities, malicious packages, and ecosystem security research"
@@ -495,6 +513,22 @@ export default function ThreatsPage() {
             sectionSources={SUPPLY_CHAIN_SOURCES}
             isRelevant={isRelevantToGaps}
             generating={generating}
+          />
+
+          {/* ── Section 3: Threat Intelligence ────────────────────────────── */}
+          <ThreatSection
+            title="Threat Intelligence"
+            description="CVEs, adversarial ML techniques, AI system incidents, and curated annual threat reports"
+            icon={<Shield className="h-5 w-5" />}
+            accentColor="text-indigo-400"
+            threats={threatIntelThreats}
+            sourcesStatus={sourcesStatus}
+            sectionSources={THREAT_INTEL_SOURCES}
+            isRelevant={isRelevantToGaps}
+            generating={generating}
+            localSevFilter={threatIntelSev}
+            onLocalSevChange={setThreatIntelSev}
+            totalBeforeLocalFilter={threatIntelAll.length}
           />
 
         </div>
