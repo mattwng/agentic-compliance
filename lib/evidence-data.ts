@@ -57,14 +57,14 @@ export const FRAMEWORK_COLORS: Record<string, string> = {
 }
 
 export const DOMAIN_COLORS: Record<string, string> = {
-  'System Architecture & Design':           '#60a5fa',
-  'Identity, Access & Privilege':           '#a78bfa',
-  'AI Model & Training Provenance':         '#34d399',
-  'Security Controls & Threat Mitigations': '#f87171',
-  'Human Oversight & Control':              '#fb923c',
-  'Governance, Risk & Policy':              '#facc15',
-  'Monitoring, Logging & Observability':    '#22d3ee',
-  'Data Governance & Privacy':              '#e879f9',
+  'System Architecture & Design':           '#a5b4fc',
+  'Identity, Access & Privilege':           '#a5b4fc',
+  'AI Model & Training Provenance':         '#a5b4fc',
+  'Security Controls & Threat Mitigations': '#a5b4fc',
+  'Human Oversight & Control':              '#a5b4fc',
+  'Governance, Risk & Policy':              '#a5b4fc',
+  'Monitoring, Logging & Observability':    '#a5b4fc',
+  'Data Governance & Privacy':              '#a5b4fc',
 }
 
 export const EVIDENCE: EvidenceItem[] = [
