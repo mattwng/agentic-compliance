@@ -223,6 +223,7 @@ function ThreatSection({
   generating,
   localSevFilter,
   onLocalSevChange,
+  localSevCounts,
   totalBeforeLocalFilter,
   defaultLimit,
   perSourceMode,
@@ -238,6 +239,7 @@ function ThreatSection({
   generating: boolean
   localSevFilter?: string
   onLocalSevChange?: (s: string) => void
+  localSevCounts?: Record<string, number>
   totalBeforeLocalFilter?: number
   defaultLimit?: number
   perSourceMode?: boolean
@@ -284,20 +286,30 @@ function ThreatSection({
         </div>
         {/* Per-section severity selector (Threat Intel only) */}
         {onLocalSevChange && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {(['critical', 'high', 'all'] as const).map(s => {
-              const cfg = s !== 'all' ? SEV_CONFIG[s] : null
+          <div className="flex items-center gap-1 flex-wrap flex-shrink-0">
+            <button
+              onClick={() => onLocalSevChange('all')}
+              className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                localSevFilter === 'all'
+                  ? 'bg-indigo-600 text-white border-indigo-500'
+                  : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-600'
+              }`}
+            >
+              All{localSevCounts ? ` (${Object.values(localSevCounts).reduce((a, b) => a + b, 0)})` : ''}
+            </button>
+            {SEV_ORDER.filter(s => localSevCounts ? localSevCounts[s] : true).map(s => {
+              const cfg = SEV_CONFIG[s]
               return (
                 <button
                   key={s}
                   onClick={() => onLocalSevChange(s)}
                   className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
                     localSevFilter === s
-                      ? cfg ? cfg.filter + ' ring-1 ring-current' : 'bg-indigo-600 text-white border-indigo-500'
+                      ? cfg.filter + ' ring-1 ring-current'
                       : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-600'
                   }`}
                 >
-                  {s === 'all' ? 'All' : cfg!.label}
+                  {cfg.label}{localSevCounts?.[s] ? ` (${localSevCounts[s]})` : ''}
                 </button>
               )
             })}
@@ -367,7 +379,6 @@ function ThreatSection({
 
 export default function ThreatsPage() {
   const qc = useQueryClient()
-  const [sevFilter, setSevFilter] = useState<string>('all')
   const [threatIntelSev, setThreatIntelSev] = useState<string>('critical')
   const [sourceFilter, setSourceFilter] = useState<string>('')
   const [search, setSearch] = useState('')
@@ -405,7 +416,6 @@ export default function ThreatsPage() {
   // Apply global filters
   const filtered = useMemo(() => {
     return allThreats.filter(t => {
-      if (sevFilter !== 'all' && t.severity !== sevFilter) return false
       if (sourceFilter && t.source !== sourceFilter) return false
       if (search) {
         const q = search.toLowerCase()
@@ -414,7 +424,7 @@ export default function ThreatsPage() {
       if (relevantOnly && !isRelevantToGaps(t)) return false
       return true
     })
-  }, [allThreats, sevFilter, sourceFilter, search, relevantOnly, isRelevantToGaps])
+  }, [allThreats, sourceFilter, search, relevantOnly, isRelevantToGaps])
 
   // Per-section filtered subsets
   const threatIntelAll       = useMemo(() => filtered.filter(t => THREAT_INTEL_SOURCES.has(t.source)), [filtered])
@@ -426,11 +436,11 @@ export default function ThreatsPage() {
     [filtered])
   const supplyChainThreats   = useMemo(() => filtered.filter(t => SUPPLY_CHAIN_SOURCES.has(t.source)), [filtered])
 
-  const sevCounts = useMemo(() => {
+  const threatIntelSevCounts = useMemo(() => {
     const counts: Record<string, number> = {}
-    for (const t of allThreats) counts[t.severity] = (counts[t.severity] ?? 0) + 1
+    for (const t of threatIntelAll) counts[t.severity] = (counts[t.severity] ?? 0) + 1
     return counts
-  }, [allThreats])
+  }, [threatIntelAll])
 
   const relevantCount = useMemo(() => allThreats.filter(isRelevantToGaps).length, [allThreats, isRelevantToGaps])
 
@@ -484,36 +494,6 @@ export default function ThreatsPage() {
         </div>
       </div>
 
-      {/* Severity chips */}
-      {!isLoading && allThreats.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setSevFilter('all')}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-              sevFilter === 'all'
-                ? 'bg-indigo-600 text-white border-indigo-500'
-                : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-600'
-            }`}
-          >
-            All ({allThreats.length})
-          </button>
-          {SEV_ORDER.filter(s => sevCounts[s]).map(s => {
-            const cfg = SEV_CONFIG[s]
-            return (
-              <button
-                key={s}
-                onClick={() => setSevFilter(sevFilter === s ? 'all' : s)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-                  sevFilter === s ? cfg.filter + ' ring-1 ring-current' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-600'
-                }`}
-              >
-                {cfg.label} ({sevCounts[s]})
-              </button>
-            )
-          })}
-        </div>
-      )}
-
       {/* Filter row */}
       <div className="flex flex-wrap gap-3 items-center">
         <select
@@ -553,9 +533,9 @@ export default function ThreatsPage() {
             Relevant to gaps ({relevantCount})
           </button>
         )}
-        {(sevFilter !== 'all' || sourceFilter || search || relevantOnly) && (
+        {(sourceFilter || search || relevantOnly) && (
           <Button
-            onClick={() => { setSevFilter('all'); setSourceFilter(''); setSearch(''); setRelevantOnly(false) }}
+            onClick={() => { setSourceFilter(''); setSearch(''); setRelevantOnly(false) }}
             variant="outline"
             className="border-slate-700 text-slate-400 text-sm"
           >
@@ -643,6 +623,7 @@ export default function ThreatsPage() {
             generating={generating}
             localSevFilter={threatIntelSev}
             onLocalSevChange={setThreatIntelSev}
+            localSevCounts={threatIntelSevCounts}
             totalBeforeLocalFilter={threatIntelAll.length}
           />
 
