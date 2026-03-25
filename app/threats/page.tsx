@@ -171,6 +171,44 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
   )
 }
 
+// ── Source Group Panel (per-source expand/collapse) ────────────────────────────
+
+function SourceGroupPanel({
+  source, threats, isRelevant, defaultCount = 1,
+}: {
+  source: string
+  threats: ThreatEntry[]
+  isRelevant: (t: ThreatEntry) => boolean
+  defaultCount?: number
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const sorted = useMemo(
+    () => [...threats].sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime()),
+    [threats],
+  )
+  const displayed = expanded ? sorted : sorted.slice(0, defaultCount)
+  const hiddenCount = sorted.length - defaultCount
+
+  return (
+    <div className="space-y-2 pb-4 border-b border-slate-800/60 last:border-b-0 last:pb-0">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-mono">{source}</span>
+        {sorted.length > defaultCount && (
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            {expanded ? 'Show less ↑' : `+${hiddenCount} more →`}
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {displayed.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevant(t)} />)}
+      </div>
+    </div>
+  )
+}
+
 // ── Section Component ──────────────────────────────────────────────────────────
 
 function ThreatSection({
@@ -187,6 +225,7 @@ function ThreatSection({
   onLocalSevChange,
   totalBeforeLocalFilter,
   defaultLimit,
+  perSourceMode,
 }: {
   title: string
   description: string
@@ -201,11 +240,23 @@ function ThreatSection({
   onLocalSevChange?: (s: string) => void
   totalBeforeLocalFilter?: number
   defaultLimit?: number
+  perSourceMode?: boolean
 }) {
   const [showAll, setShowAll] = useState(false)
 
   // Collapse back to default when the underlying threat list changes (filter applied)
   useEffect(() => { if (defaultLimit) setShowAll(false) }, [threats.length, defaultLimit])
+
+  // Group by source for perSourceMode
+  const bySource = useMemo(() => {
+    if (!perSourceMode) return null
+    const map: Record<string, ThreatEntry[]> = {}
+    for (const t of threats) {
+      if (!map[t.source]) map[t.source] = []
+      map[t.source].push(t)
+    }
+    return map
+  }, [threats, perSourceMode])
 
   const sectionStatus = Object.entries(sourcesStatus).filter(([src]) => sectionSources.has(src))
   const anyFetching = generating && sectionStatus.some(([, s]) => s.type === 'live' && !s.ok)
@@ -270,6 +321,18 @@ function ThreatSection({
             <p className="text-slate-500 text-sm">No results match your current filters.</p>
           </CardContent>
         </Card>
+      ) : perSourceMode && bySource ? (
+        <div className="space-y-5">
+          {Object.entries(bySource).map(([source, sourceThreats]) => (
+            <SourceGroupPanel
+              key={source}
+              source={source}
+              threats={sourceThreats}
+              isRelevant={isRelevant}
+              defaultCount={1}
+            />
+          ))}
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -564,6 +627,7 @@ export default function ThreatsPage() {
             sectionSources={SUPPLY_CHAIN_SOURCES}
             isRelevant={isRelevantToGaps}
             generating={generating}
+            perSourceMode
           />
 
           {/* ── Section 3: Threat Intelligence ────────────────────────────── */}
