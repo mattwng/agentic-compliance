@@ -6,24 +6,41 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, ExternalLink, AlertCircle, ShieldAlert } from 'lucide-react'
-import type { ThreatCache, ThreatEntry, ThreatSeverity } from '@/lib/threat-fetch'
+import {
+  RefreshCw, ExternalLink, AlertCircle, ShieldAlert,
+  Shield, Newspaper, Package,
+} from 'lucide-react'
+import type { ThreatCache, ThreatEntry, ThreatSeverity, SourceStatus } from '@/lib/threat-fetch'
 import { EVIDENCE } from '@/lib/evidence-data'
 import { DOMAIN_THREAT_TAGS, buildGappedDomains, getRelevantThreats } from '@/lib/threat-alerts'
+
+// ── Section source sets ────────────────────────────────────────────────────────
+
+const THREAT_INTEL_SOURCES = new Set([
+  'CISA KEV', 'AI Incident Database', 'MITRE ATLAS', 'GitHub Issues',
+  'ENISA Threat Landscape', 'IBM X-Force Index', 'Google / Mandiant',
+  'Verizon DBIR', 'MIT AI Incident Tracker',
+])
+
+const NEWS_SOURCES = new Set([
+  'The Hacker News', 'CISA Advisories', 'PyPA Advisories',
+])
+
+const SUPPLY_CHAIN_SOURCES = new Set([
+  'Snyk', 'Datadog Security Labs', 'Socket.dev', 'OSV',
+])
 
 // ── Severity helpers ───────────────────────────────────────────────────────────
 
 const SEV_CONFIG: Record<ThreatSeverity, { label: string; dot: string; badge: string; filter: string }> = {
-  critical: { label: 'Critical', dot: '#f43f5e', badge: 'bg-rose-900/30 text-rose-400 border-rose-800',    filter: 'bg-rose-900/20 text-rose-400 border-rose-800' },
-  high:     { label: 'High',     dot: '#f97316', badge: 'bg-orange-900/30 text-orange-400 border-orange-800', filter: 'bg-orange-900/20 text-orange-400 border-orange-800' },
-  medium:   { label: 'Medium',   dot: '#eab308', badge: 'bg-amber-900/30 text-amber-400 border-amber-800',   filter: 'bg-amber-900/20 text-amber-400 border-amber-800' },
-  low:      { label: 'Low',      dot: '#22c55e', badge: 'bg-green-900/30 text-green-400 border-green-800',   filter: 'bg-green-900/20 text-green-400 border-green-800' },
-  info:     { label: 'Info',     dot: '#94a3b8', badge: 'bg-slate-800 text-slate-400 border-slate-700',      filter: 'bg-slate-800 text-slate-400 border-slate-700' },
+  critical: { label: 'Critical', dot: '#f43f5e', badge: 'bg-rose-900/30 text-rose-400 border-rose-800',       filter: 'bg-rose-900/20 text-rose-400 border-rose-800' },
+  high:     { label: 'High',     dot: '#f97316', badge: 'bg-orange-900/30 text-orange-400 border-orange-800',  filter: 'bg-orange-900/20 text-orange-400 border-orange-800' },
+  medium:   { label: 'Medium',   dot: '#eab308', badge: 'bg-amber-900/30 text-amber-400 border-amber-800',     filter: 'bg-amber-900/20 text-amber-400 border-amber-800' },
+  low:      { label: 'Low',      dot: '#22c55e', badge: 'bg-green-900/30 text-green-400 border-green-800',     filter: 'bg-green-900/20 text-green-400 border-green-800' },
+  info:     { label: 'Info',     dot: '#94a3b8', badge: 'bg-slate-800 text-slate-400 border-slate-700',        filter: 'bg-slate-800 text-slate-400 border-slate-700' },
 }
 
 const SEV_ORDER: ThreatSeverity[] = ['critical', 'high', 'medium', 'low', 'info']
-
-// DOMAIN_THREAT_TAGS, buildGappedDomains, getRelevantThreats imported from lib/threat-alerts
 
 type AssessmentSummary = {
   id: string
@@ -55,6 +72,31 @@ function formatTimestamp(isoDate: string): string {
       hour: 'numeric', minute: '2-digit',
     })
   } catch { return isoDate }
+}
+
+// ── Source status pill ─────────────────────────────────────────────────────────
+
+function SourcePill({ source, status }: { source: string; status: SourceStatus }) {
+  const isLive = status.type === 'live'
+  const isFetching = isLive && !status.ok && status.error === null
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs border font-mono ${
+        isFetching
+          ? 'bg-indigo-900/10 border-indigo-900/30 text-indigo-400'
+          : status.ok && isLive
+          ? 'bg-green-900/10 border-green-900/30 text-green-500'
+          : status.ok && !isLive
+          ? 'bg-slate-800/60 border-slate-700 text-slate-500'
+          : 'bg-red-900/10 border-red-900/20 text-red-500/70'
+      }`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full bg-current ${isLive ? 'animate-pulse' : ''}`} />
+      {source}
+      {isFetching ? ' (updating…)' : ` (${status.count})`}
+      {isLive && <span className="ml-1 opacity-40 text-[10px]">live</span>}
+    </span>
+  )
 }
 
 // ── Threat Card ────────────────────────────────────────────────────────────────
@@ -111,11 +153,83 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
   )
 }
 
+// ── Section Component ──────────────────────────────────────────────────────────
+
+function ThreatSection({
+  title,
+  description,
+  icon,
+  accentColor,
+  threats,
+  sourcesStatus,
+  sectionSources,
+  isRelevant,
+  generating,
+}: {
+  title: string
+  description: string
+  icon: React.ReactNode
+  accentColor: string
+  threats: ThreatEntry[]
+  sourcesStatus: Record<string, SourceStatus>
+  sectionSources: Set<string>
+  isRelevant: (t: ThreatEntry) => boolean
+  generating: boolean
+}) {
+  const sectionStatus = Object.entries(sourcesStatus).filter(([src]) => sectionSources.has(src))
+  const anyFetching = generating && sectionStatus.some(([, s]) => s.type === 'live' && !s.ok)
+
+  return (
+    <div className="space-y-4">
+      {/* Section header */}
+      <div className={`flex items-start gap-3 pb-3 border-b border-slate-800`}>
+        <div className={`mt-0.5 ${accentColor}`}>{icon}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+            <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+              {threats.length} {threats.length === 1 ? 'result' : 'results'}
+            </span>
+            {anyFetching && (
+              <span className="text-xs text-indigo-400 flex items-center gap-1">
+                <RefreshCw className="h-3 w-3 animate-spin" /> updating…
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+        </div>
+      </div>
+
+      {/* Per-section source pills */}
+      {sectionStatus.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {sectionStatus.map(([source, status]) => (
+            <SourcePill key={source} source={source} status={status} />
+          ))}
+        </div>
+      )}
+
+      {/* Content */}
+      {threats.length === 0 ? (
+        <Card className="bg-slate-900 border-slate-800">
+          <CardContent className="flex items-center justify-center py-10">
+            <p className="text-slate-500 text-sm">No results match your current filters.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {threats.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevant(t)} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function ThreatsPage() {
   const qc = useQueryClient()
-  const [sevFilter, setSevFilter] = useState<string>('critical')
+  const [sevFilter, setSevFilter] = useState<string>('all')
   const [sourceFilter, setSourceFilter] = useState<string>('')
   const [search, setSearch] = useState('')
   const [refreshing, setRefreshing] = useState(false)
@@ -125,7 +239,7 @@ export default function ThreatsPage() {
   const { data, isLoading } = useQuery<ThreatCache>({
     queryKey: ['threats'],
     queryFn: () => fetch('/api/threats').then(r => r.json()),
-    refetchInterval: (query) => (query.state.data?.generating ? 5000 : 3600000), // 5s when fetching, 1hr otherwise
+    refetchInterval: (query) => (query.state.data?.generating ? 5000 : 3600000),
   })
 
   const { data: assessments } = useQuery<AssessmentSummary[]>({
@@ -138,7 +252,6 @@ export default function ThreatsPage() {
     return Object.values(data.grouped).flat()
   }, [data])
 
-  // Domains with Non-Compliant or Partial items in the selected assessment
   const gappedDomains = useMemo(() => {
     if (!assessmentFilter || !assessments) return new Set<string>()
     const assessment = assessments.find(a => a.id === assessmentFilter)
@@ -150,6 +263,7 @@ export default function ThreatsPage() {
     return getRelevantThreats([threat], gappedDomains).length > 0
   }, [gappedDomains])
 
+  // Apply global filters
   const filtered = useMemo(() => {
     return allThreats.filter(t => {
       if (sevFilter !== 'all' && t.severity !== sevFilter) return false
@@ -162,6 +276,11 @@ export default function ThreatsPage() {
       return true
     })
   }, [allThreats, sevFilter, sourceFilter, search, relevantOnly, isRelevantToGaps])
+
+  // Per-section filtered subsets
+  const threatIntelThreats   = useMemo(() => filtered.filter(t => THREAT_INTEL_SOURCES.has(t.source)), [filtered])
+  const newsThreats          = useMemo(() => filtered.filter(t => NEWS_SOURCES.has(t.source)), [filtered])
+  const supplyChainThreats   = useMemo(() => filtered.filter(t => SUPPLY_CHAIN_SOURCES.has(t.source)), [filtered])
 
   const sevCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -180,8 +299,11 @@ export default function ThreatsPage() {
     setRefreshing(false)
   }
 
+  const sourcesStatus = data?.sources_status ?? {}
+  const generating = data?.generating ?? false
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -193,11 +315,11 @@ export default function ThreatsPage() {
             </span>
           </div>
           <p className="text-slate-400 mt-1">
-            AI-specific threats from CISA KEV, MITRE ATLAS, AI Incident Database, ENISA, IBM X-Force, Mandiant, and Verizon DBIR
+            AI threat intel · news &amp; advisories · supply chain security — across 15 live and curated sources
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {data?.generating ? (
+          {generating ? (
             <span className="text-xs text-indigo-400 flex items-center gap-1.5">
               <RefreshCw className="h-3 w-3 animate-spin" /> Updating live feeds…
             </span>
@@ -208,7 +330,7 @@ export default function ThreatsPage() {
           ) : null}
           <Button
             onClick={handleRefresh}
-            disabled={refreshing || data?.generating}
+            disabled={refreshing || generating}
             variant="outline"
             className="border-slate-700 text-sm"
           >
@@ -218,34 +340,7 @@ export default function ThreatsPage() {
         </div>
       </div>
 
-      {/* Source status pills */}
-      {data?.sources_status && (
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(data.sources_status).map(([source, status]) => {
-            const isLive = status.type === 'live'
-            const isFetching = isLive && !status.ok
-            return (
-              <span
-                key={source}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border font-mono ${
-                  isFetching
-                    ? 'bg-indigo-900/10 border-indigo-900/30 text-indigo-400'
-                    : status.ok && isLive
-                    ? 'bg-green-900/10 border-green-900/30 text-green-500'
-                    : 'bg-slate-800/60 border-slate-700 text-slate-500'
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full bg-current ${isLive ? 'animate-pulse' : ''}`} />
-                {source}
-                {isFetching ? ' (updating…)' : ` (${status.count})`}
-                {isLive && <span className="ml-1 opacity-50 text-[10px]">live</span>}
-              </span>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Stat chips */}
+      {/* Severity chips */}
       {!isLoading && allThreats.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <button
@@ -275,7 +370,7 @@ export default function ThreatsPage() {
         </div>
       )}
 
-      {/* Filters row */}
+      {/* Filter row */}
       <div className="flex flex-wrap gap-3 items-center">
         <select
           value={sourceFilter}
@@ -291,7 +386,6 @@ export default function ThreatsPage() {
           placeholder="Search threats…"
           className="bg-slate-800 border-slate-700 w-full sm:max-w-xs text-sm"
         />
-        {/* Assessment gap mapping */}
         <select
           value={assessmentFilter}
           onChange={e => { setAssessmentFilter(e.target.value); setRelevantOnly(false) }}
@@ -325,7 +419,7 @@ export default function ThreatsPage() {
           </Button>
         )}
         {filtered.length > 0 && (
-          <span className="self-center text-xs text-slate-500 sm:ml-auto">{filtered.length} threats</span>
+          <span className="self-center text-xs text-slate-500 sm:ml-auto">{filtered.length} total results</span>
         )}
       </div>
 
@@ -341,29 +435,68 @@ export default function ThreatsPage() {
         </div>
       )}
 
-      {/* Content */}
+      {/* Loading skeleton */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[...Array(12)].map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
+        <div className="space-y-8">
+          {[0, 1, 2].map(s => (
+            <div key={s} className="space-y-4">
+              <Skeleton className="h-6 w-64" />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
+              </div>
+            </div>
+          ))}
         </div>
-      ) : data?.generating && allThreats.length === 0 ? (
+      ) : generating && allThreats.length === 0 ? (
         <Card className="bg-slate-900 border-slate-800">
           <CardContent className="flex flex-col items-center py-20 gap-4">
             <RefreshCw className="h-10 w-10 text-indigo-400 animate-spin" />
             <p className="text-slate-300 font-medium">Fetching live threat intelligence…</p>
-            <p className="text-slate-500 text-sm">Pulling from CISA, MITRE ATLAS, and AI Incident Database. This takes about 30–60 seconds on first load.</p>
-          </CardContent>
-        </Card>
-      ) : filtered.length === 0 ? (
-        <Card className="bg-slate-900 border-slate-800">
-          <CardContent className="flex flex-col items-center py-16 gap-3">
-            <AlertCircle className="h-8 w-8 text-slate-600" />
-            <p className="text-slate-400">No threats match your filters.</p>
+            <p className="text-slate-500 text-sm">Pulling from 11 live sources. This takes about 30–60 seconds on first load.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevantToGaps(t)} />)}
+        <div className="space-y-12">
+
+          {/* ── Section 1: Threat Intelligence ────────────────────────────── */}
+          <ThreatSection
+            title="Threat Intelligence"
+            description="CVEs, adversarial ML techniques, AI system incidents, and curated annual threat reports"
+            icon={<Shield className="h-5 w-5" />}
+            accentColor="text-indigo-400"
+            threats={threatIntelThreats}
+            sourcesStatus={sourcesStatus}
+            sectionSources={THREAT_INTEL_SOURCES}
+            isRelevant={isRelevantToGaps}
+            generating={generating}
+          />
+
+          {/* ── Section 2: Latest News & Advisories ───────────────────────── */}
+          <ThreatSection
+            title="Latest News & Advisories"
+            description="Breaking security news, official government advisories, and Python package security alerts"
+            icon={<Newspaper className="h-5 w-5" />}
+            accentColor="text-sky-400"
+            threats={newsThreats}
+            sourcesStatus={sourcesStatus}
+            sectionSources={NEWS_SOURCES}
+            isRelevant={isRelevantToGaps}
+            generating={generating}
+          />
+
+          {/* ── Section 3: Supply Chain & Package Security ────────────────── */}
+          <ThreatSection
+            title="Supply Chain & Package Security"
+            description="Open source dependency vulnerabilities, malicious packages, and ecosystem security research"
+            icon={<Package className="h-5 w-5" />}
+            accentColor="text-amber-400"
+            threats={supplyChainThreats}
+            sourcesStatus={sourcesStatus}
+            sectionSources={SUPPLY_CHAIN_SOURCES}
+            isRelevant={isRelevantToGaps}
+            generating={generating}
+          />
+
         </div>
       )}
     </div>

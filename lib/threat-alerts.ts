@@ -2,14 +2,14 @@ import { EVIDENCE } from './evidence-data'
 import type { ThreatEntry } from './threat-fetch'
 
 export const DOMAIN_THREAT_TAGS: Record<string, string[]> = {
-  'System Architecture & Design':           ['supply-chain', 'architecture', 'atlas', 'mitre'],
+  'System Architecture & Design':           ['supply-chain', 'architecture', 'atlas', 'mitre', 'oss-security', 'github-issues', 'malicious-package'],
   'Identity, Access & Privilege':           ['credential-theft', 'api-key', 'x-force', 'ibm'],
-  'AI Model & Training Provenance':         ['data-poisoning', 'supply-chain', 'model-weights', 'ip-theft', 'ml', 'nation-state', 'espionage', 'llm'],
-  'Security Controls & Threat Mitigations': ['prompt-injection', 'llm', 'ai-attack', 'atlas', 'mitre', 'cve', 'exploited', 'recon', 'exploitation', 'phishing', 'social-engineering', 'deepfake', 'bec'],
+  'AI Model & Training Provenance':         ['data-poisoning', 'supply-chain', 'model-weights', 'ip-theft', 'ml', 'nation-state', 'espionage', 'llm', 'pypi', 'oss-security', 'pypa'],
+  'Security Controls & Threat Mitigations': ['prompt-injection', 'llm', 'ai-attack', 'atlas', 'mitre', 'cve', 'exploited', 'recon', 'exploitation', 'phishing', 'social-engineering', 'deepfake', 'bec', 'github-issues', 'advisory', 'cisa-advisory'],
   'Human Oversight & Control':              ['autonomous-agents', 'agentic-ai', 'ai-incident', 'safety'],
-  'Governance, Risk & Policy':              ['annual-report', 'nation-state', 'espionage', 'ip-theft'],
+  'Governance, Risk & Policy':              ['annual-report', 'nation-state', 'espionage', 'ip-theft', 'threat-news', 'advisory'],
   'Monitoring, Logging & Observability':    ['ai-incident', 'aiid', 'agentic-ai'],
-  'Data Governance & Privacy':              ['ip-theft', 'data-poisoning', 'espionage'],
+  'Data Governance & Privacy':              ['ip-theft', 'data-poisoning', 'espionage', 'pypi', 'supply-chain'],
 }
 
 export function buildGappedDomains(
