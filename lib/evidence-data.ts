@@ -44,27 +44,27 @@ export const DOMAINS = [
 ]
 
 export const FRAMEWORK_COLORS: Record<string, string> = {
-  'NIST AI RMF':       '#818cf8',
-  'CISA ZTMM':         '#818cf8',
-  'OWASP LLM Top 10':  '#818cf8',
-  'OWASP Agentic AI':  '#818cf8',
-  'MITRE ATLAS':       '#818cf8',
-  'NIST SP 800-207/A': '#818cf8',
-  'NIST AI 600-1':     '#818cf8',
-  'Google SAIF':       '#818cf8',
-  'CSA Agentic IAM':   '#818cf8',
-  'EU AI Act':         '#818cf8',
+  'NIST AI RMF':       '#a5b4fc',
+  'CISA ZTMM':         '#a5b4fc',
+  'OWASP LLM Top 10':  '#a5b4fc',
+  'OWASP Agentic AI':  '#a5b4fc',
+  'MITRE ATLAS':       '#a5b4fc',
+  'NIST SP 800-207/A': '#a5b4fc',
+  'NIST AI 600-1':     '#a5b4fc',
+  'Google SAIF':       '#a5b4fc',
+  'CSA Agentic IAM':   '#a5b4fc',
+  'EU AI Act':         '#a5b4fc',
 }
 
 export const DOMAIN_COLORS: Record<string, string> = {
-  'System Architecture & Design':           '#94a3b8',
-  'Identity, Access & Privilege':           '#94a3b8',
-  'AI Model & Training Provenance':         '#94a3b8',
-  'Security Controls & Threat Mitigations': '#94a3b8',
-  'Human Oversight & Control':              '#94a3b8',
-  'Governance, Risk & Policy':              '#94a3b8',
-  'Monitoring, Logging & Observability':    '#94a3b8',
-  'Data Governance & Privacy':              '#94a3b8',
+  'System Architecture & Design':           '#60a5fa',
+  'Identity, Access & Privilege':           '#a78bfa',
+  'AI Model & Training Provenance':         '#34d399',
+  'Security Controls & Threat Mitigations': '#f87171',
+  'Human Oversight & Control':              '#fb923c',
+  'Governance, Risk & Policy':              '#facc15',
+  'Monitoring, Logging & Observability':    '#22d3ee',
+  'Data Governance & Privacy':              '#e879f9',
 }
 
 export const EVIDENCE: EvidenceItem[] = [

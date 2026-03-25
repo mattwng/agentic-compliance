@@ -461,7 +461,7 @@ export default function TopologyPage() {
                       <span className={c.text}>{nodeIcon(node.type)}</span>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-semibold text-slate-100 truncate leading-tight">{node.label}</div>
-                        <div className="text-[9px] text-slate-500 truncate leading-tight">{node.sublabel}</div>
+                        <div className="text-[9px] text-slate-300 truncate leading-tight">{node.sublabel}</div>
                       </div>
                       {threatCount > 0 && (
                         <span className={`flex-shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold text-white ${c.badge}`}>
@@ -473,11 +473,11 @@ export default function TopologyPage() {
                 })}
 
                 {/* Zone labels */}
-                <div style={{ position: 'absolute', left: 40, top: 16 }} className="text-[10px] text-slate-600 font-medium uppercase tracking-wider">Human Interface</div>
-                <div style={{ position: 'absolute', left: 240, top: 16 }} className="text-[10px] text-slate-600 font-medium uppercase tracking-wider">Orchestration Layer</div>
-                <div style={{ position: 'absolute', left: 440, top: 16 }} className="text-[10px] text-slate-600 font-medium uppercase tracking-wider">AI Inference + Tools</div>
-                <div style={{ position: 'absolute', left: 670, top: 16 }} className="text-[10px] text-slate-600 font-medium uppercase tracking-wider">External Integrations</div>
-                <div style={{ position: 'absolute', left: 870, top: 16 }} className="text-[10px] text-slate-600 font-medium uppercase tracking-wider">Internal Data</div>
+                <div style={{ position: 'absolute', left: 40, top: 16 }} className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">Human Interface</div>
+                <div style={{ position: 'absolute', left: 240, top: 16 }} className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">Orchestration Layer</div>
+                <div style={{ position: 'absolute', left: 440, top: 16 }} className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">AI Inference + Tools</div>
+                <div style={{ position: 'absolute', left: 670, top: 16 }} className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">External Integrations</div>
+                <div style={{ position: 'absolute', left: 870, top: 16 }} className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">Internal Data</div>
 
                 {/* Zone divider lines */}
                 {[230, 440, 665, 860].map(x => (
@@ -487,7 +487,7 @@ export default function TopologyPage() {
             </div>
 
             {/* Legend */}
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-300">
               <div className="flex items-center gap-1.5">
                 <svg width="28" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 2" /><polygon points="20,2 28,5 20,8" fill="#ef4444"/></svg>
                 <span>Threatened connection</span>
@@ -503,7 +503,7 @@ export default function TopologyPage() {
                 <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>Low
                 <span className="inline-block w-2 h-2 rounded-full bg-slate-600"></span>Clean
               </div>
-              <span className="text-slate-600">Click a node to see threat details →</span>
+              <span className="text-slate-300">Click a node to see threat details →</span>
             </div>
           </div>
 
@@ -531,13 +531,13 @@ export default function TopologyPage() {
                     <SeverityIcon s={selected.severity} />
                     {severityColor(selected.severity).label}
                   </span>
-                  <span className="text-xs text-slate-500">{selected.threats.length} finding{selected.threats.length !== 1 ? 's' : ''}</span>
+                  <span className="text-xs text-slate-300">{selected.threats.length} finding{selected.threats.length !== 1 ? 's' : ''}</span>
                 </div>
 
                 {/* Threats */}
                 {selected.threats.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-slate-500 text-sm">
-                    <Shield className="h-6 w-6 mx-auto mb-2 text-slate-600" />
+                  <div className="px-4 py-6 text-center text-slate-300 text-sm">
+                    <Shield className="h-6 w-6 mx-auto mb-2 text-slate-400" />
                     No threat intelligence findings for this node.
                   </div>
                 ) : (
@@ -556,9 +556,9 @@ export default function TopologyPage() {
                         </div>
                         <p className="text-xs text-slate-300 leading-relaxed">{t.description}</p>
                         {t.control && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-300">
                             <ChevronRight className="h-3 w-3 flex-shrink-0" />
-                            <span>Related control: <span className="text-slate-400 font-mono">{t.control}</span></span>
+                            <span>Related control: <span className="text-slate-200 font-mono">{t.control}</span></span>
                           </div>
                         )}
                       </div>
@@ -570,9 +570,9 @@ export default function TopologyPage() {
           ) : (
             /* Placeholder panel when nothing selected */
             <div className="w-80 flex-shrink-0">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-5 py-10 text-center text-slate-600 text-sm">
-                <Bot className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                <p className="font-medium text-slate-500">Select a node</p>
+              <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-5 py-10 text-center text-slate-300 text-sm">
+                <Bot className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <p className="font-medium text-slate-200">Select a node</p>
                 <p className="text-xs mt-1">Click any component to view threat intelligence findings</p>
               </div>
             </div>
