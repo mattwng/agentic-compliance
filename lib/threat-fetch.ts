@@ -455,7 +455,12 @@ async function fetchMitreAtlas(): Promise<[ThreatEntry[], SourceStatus]> {
           title: `[${id}] ${String(tech.name ?? 'Unknown Technique')}`,
           description: String(tech.description ?? '').slice(0, 500),
           vulnerability_summary: `Adversarial AI/ML attack technique from MITRE ATLAS v${atlasData.version ?? ''}. Tactics: ${tactics.slice(0, 3).join(', ') || 'N/A'}.`,
-          published: `${String(tech.created_date ?? new Date().toISOString().split('T')[0])}T00:00:00Z`,
+          published: (() => {
+            const d = tech.created_date
+            if (d instanceof Date) return d.toISOString()
+            if (d) return `${String(d)}T00:00:00Z`
+            return new Date().toISOString()
+          })(),
           link: `https://atlas.mitre.org/techniques/${id}`,
           severity: 'high',
           tags: ['mitre', 'atlas', 'ai-attack'],
