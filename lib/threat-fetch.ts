@@ -53,6 +53,7 @@ type OsvVuln = {
   modified?: string
   references?: Array<{ type: string; url: string }>
   severity?: Array<{ type: string; score: string }>
+  database_specific?: { severity?: string }
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -310,12 +311,26 @@ function slugFromUrl(url: string): string {
 }
 
 function osvSeverity(vuln: OsvVuln): ThreatSeverity {
-  const raw = vuln.severity?.find(s => s.type === 'CVSS_V3')?.score ?? ''
-  if (!raw) return 'medium'
-  const score = parseFloat(raw)
-  if (score >= 9.0) return 'critical'
-  if (score >= 7.0) return 'high'
-  if (score < 4.0) return 'low'
+  // OSV database_specific.severity is a plain string ("HIGH", "CRITICAL", "MODERATE")
+  // provided by most ecosystems (PyPI, GitHub) — most reliable source
+  const dbSev = (vuln.database_specific?.severity ?? '').toUpperCase()
+  if (dbSev === 'CRITICAL') return 'critical'
+  if (dbSev === 'HIGH') return 'high'
+  if (dbSev === 'MODERATE' || dbSev === 'MEDIUM') return 'medium'
+  if (dbSev === 'LOW') return 'low'
+
+  // Fallback: OSV severity[].score is a CVSS *vector string* (e.g. "CVSS:3.1/AV:N/.../C:H/I:H/A:H"),
+  // not a numeric score — parseFloat() on it returns NaN. Infer from impact components instead.
+  const vector = vuln.severity?.find(s => s.type === 'CVSS_V3')?.score ?? ''
+  if (vector) {
+    const impacts = vector.match(/[CIA]:([HML])/g) ?? []
+    const highCount = impacts.filter(i => i.endsWith(':H')).length
+    const networkExploitable = vector.includes('AV:N')
+    if (highCount >= 2 && networkExploitable) return 'critical'
+    if (highCount >= 1) return 'high'
+    return 'medium'
+  }
+
   return 'medium'
 }
 
