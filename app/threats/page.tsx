@@ -347,11 +347,8 @@ function ThreatSection({
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {displayThreats.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevant(t)} />)}
-          </div>
           {defaultLimit && (
-            <div className="flex justify-center">
+            <div className="flex justify-start">
               {!showAll && hiddenCount > 0 ? (
                 <button
                   onClick={() => setShowAll(true)}
@@ -369,6 +366,9 @@ function ThreatSection({
               )}
             </div>
           )}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {displayThreats.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevant(t)} />)}
+          </div>
         </div>
       )}
     </div>
@@ -379,7 +379,7 @@ function ThreatSection({
 
 export default function ThreatsPage() {
   const qc = useQueryClient()
-  const [threatIntelSev, setThreatIntelSev] = useState<string>('critical')
+  const [threatIntelSev, setThreatIntelSev] = useState<string>('all')
   const [sourceFilter, setSourceFilter] = useState<string>('')
   const [search, setSearch] = useState('')
   const [refreshing, setRefreshing] = useState(false)
