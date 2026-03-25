@@ -72,6 +72,12 @@ const NODES: TopologyNode[] = [
         description: 'Supply Chain Compromise — SDK dependency edge (LangChain → OpenAI API) is an active supply chain attack surface.',
         control: 'arch-06 (supply chain docs)',
       },
+      {
+        source: 'GitHub Advisory',
+        technique: 'GHSA-h59x-p739-982c',
+        description: 'GitHub Advisory: LangChain ≤0.1.20 — arbitrary code execution via unsafe deserialization in the tool-call response parser. Affects this exact pinned version. Patch available in 0.1.21+.',
+        control: 'arch-06 (supply chain docs) — Not Started',
+      },
     ],
   },
   {
@@ -122,6 +128,12 @@ const NODES: TopologyNode[] = [
         source: 'AI Incident Database',
         description: 'AIID #642: AI email system entered runaway loop sending mass unsolicited messages via transactional API. Architecture matches this deployment.',
         control: 'human-01 (HITL checkpoints) — Partial',
+      },
+      {
+        source: 'GitHub Advisory',
+        technique: 'GHSA-3wgr-7772-25jx',
+        description: 'GitHub Advisory: FastMCP transitive dependency (anyio ≤4.3.0) — resource exhaustion via uncapped task spawning in tool dispatch loop. Can be triggered by malformed LLM output.',
+        control: 'sec-06 (plugin/tool mitigations) — Non-Compliant',
       },
     ],
   },
@@ -247,7 +259,7 @@ const EDGES: TopologyEdge[] = [
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const NODE_W = 154
-const NODE_H = 52
+const NODE_H = 68
 const CANVAS_W = 1060
 const CANVAS_H = 580
 
@@ -275,14 +287,27 @@ function nodeIcon(type: TopologyNode['type']) {
 }
 
 function sourceColor(source: string) {
-  if (source === 'CISA KEV')            return 'text-rose-400 bg-rose-500/10 border-rose-500/30'
-  if (source === 'MITRE ATLAS')         return 'text-orange-400 bg-orange-500/10 border-orange-500/30'
+  if (source === 'CISA KEV')             return 'text-rose-400 bg-rose-500/10 border-rose-500/30'
+  if (source === 'MITRE ATLAS')          return 'text-orange-400 bg-orange-500/10 border-orange-500/30'
   if (source === 'AI Incident Database') return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30'
-  if (source === 'IBM X-Force')         return 'text-purple-400 bg-purple-500/10 border-purple-500/30'
-  if (source === 'Mandiant')            return 'text-red-400 bg-red-500/10 border-red-500/30'
-  if (source === 'ENISA')               return 'text-blue-400 bg-blue-500/10 border-blue-500/30'
-  if (source === 'Verizon DBIR')        return 'text-slate-300 bg-slate-700/50 border-slate-600/30'
+  if (source === 'IBM X-Force')          return 'text-purple-400 bg-purple-500/10 border-purple-500/30'
+  if (source === 'Mandiant')             return 'text-red-400 bg-red-500/10 border-red-500/30'
+  if (source === 'ENISA')                return 'text-blue-400 bg-blue-500/10 border-blue-500/30'
+  if (source === 'Verizon DBIR')         return 'text-slate-300 bg-slate-700/50 border-slate-600/30'
+  if (source === 'GitHub Advisory')      return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
   return 'text-slate-400 bg-slate-800 border-slate-700'
+}
+
+function sourceDotColor(source: string) {
+  if (source === 'CISA KEV')             return 'bg-rose-400'
+  if (source === 'MITRE ATLAS')          return 'bg-orange-400'
+  if (source === 'AI Incident Database') return 'bg-yellow-400'
+  if (source === 'IBM X-Force')          return 'bg-purple-400'
+  if (source === 'Mandiant')             return 'bg-red-400'
+  if (source === 'ENISA')                return 'bg-blue-400'
+  if (source === 'Verizon DBIR')         return 'bg-slate-400'
+  if (source === 'GitHub Advisory')      return 'bg-emerald-400'
+  return 'bg-slate-500'
 }
 
 // ─── Edge SVG path (center-to-center bezier) ─────────────────────────────────
@@ -439,6 +464,7 @@ export default function TopologyPage() {
                   const c = severityColor(node.severity)
                   const isSelected = selected?.id === node.id
                   const threatCount = node.threats.length
+                  const uniqueSources = [...new Set(node.threats.map(t => t.source))]
                   return (
                     <div
                       key={node.id}
@@ -452,21 +478,34 @@ export default function TopologyPage() {
                         cursor: 'pointer',
                       }}
                       className={`
-                        rounded-lg border ring-1 px-3 py-2 flex items-center gap-2
+                        rounded-lg border ring-1 px-3 py-2 flex flex-col justify-between
                         transition-all duration-150 select-none
                         ${c.ring} ${c.bg}
                         ${isSelected ? 'border-indigo-400 shadow-lg shadow-indigo-500/20 scale-105' : 'border-slate-700 hover:border-slate-500'}
                       `}
                     >
-                      <span className={c.text}>{nodeIcon(node.type)}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-slate-100 truncate leading-tight">{node.label}</div>
-                        <div className="text-[9px] text-slate-300 truncate leading-tight">{node.sublabel}</div>
+                      <div className="flex items-center gap-2">
+                        <span className={c.text}>{nodeIcon(node.type)}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold text-slate-100 truncate leading-tight">{node.label}</div>
+                          <div className="text-[9px] text-slate-300 truncate leading-tight">{node.sublabel}</div>
+                        </div>
+                        {threatCount > 0 && (
+                          <span className={`flex-shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold text-white ${c.badge}`}>
+                            {threatCount}
+                          </span>
+                        )}
                       </div>
-                      {threatCount > 0 && (
-                        <span className={`flex-shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold text-white ${c.badge}`}>
-                          {threatCount}
-                        </span>
+                      {uniqueSources.length > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          {uniqueSources.map(src => (
+                            <span
+                              key={src}
+                              title={src}
+                              className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${sourceDotColor(src)}`}
+                            />
+                          ))}
+                        </div>
                       )}
                     </div>
                   )
@@ -592,6 +631,7 @@ export default function TopologyPage() {
               { name: 'Mandiant',              desc: 'Active campaign intelligence',       color: 'text-red-400    bg-red-500/10    border-red-500/30' },
               { name: 'ENISA',                 desc: 'AI threat landscape trends',         color: 'text-blue-400   bg-blue-500/10   border-blue-500/30' },
               { name: 'Verizon DBIR',          desc: 'Breach pattern statistics',          color: 'text-slate-300  bg-slate-700/50  border-slate-600/30' },
+              { name: 'GitHub Advisory',       desc: 'OSS dependency vulnerability DB',     color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
             ].map(s => (
               <div key={s.name} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${s.color}`}>
                 <span className="font-semibold">{s.name}</span>
