@@ -87,7 +87,7 @@ function SourcePill({ source, status }: { source: string; status: SourceStatus }
           : status.ok && isLive
           ? 'bg-green-900/10 border-green-900/30 text-green-500'
           : status.ok && !isLive
-          ? 'bg-slate-800/60 border-slate-700 text-slate-500'
+          ? 'bg-slate-700/50 border-slate-500 text-slate-300'
           : 'bg-red-900/10 border-red-900/20 text-red-500/70'
       }`}
     >
@@ -160,7 +160,7 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
         {threat.tags.length > 0 && (
           <div className="flex gap-1.5 flex-wrap">
             {threat.tags.slice(0, 5).map(tag => (
-              <span key={tag} className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 font-mono">
+              <span key={tag} className="text-xs px-1.5 py-0.5 rounded bg-slate-700/60 border border-slate-600 text-slate-300 font-mono">
                 {tag}
               </span>
             ))}
@@ -273,7 +273,7 @@ function ThreatSection({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
-            <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+            <span className="text-xs text-slate-300 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-600">
               {defaultLimit && !showAll && hiddenCount > 0 ? `${defaultLimit} of ` : ''}{threats.length}{totalBeforeLocalFilter !== undefined && localSevFilter !== 'all' ? ` of ${totalBeforeLocalFilter}` : ''} {threats.length === 1 ? 'result' : 'results'}
             </span>
             {anyFetching && (
@@ -543,7 +543,7 @@ export default function ThreatsPage() {
           </Button>
         )}
         {filtered.length > 0 && (
-          <span className="self-center text-xs text-slate-500 sm:ml-auto">{filtered.length} total results</span>
+          <span className="self-center text-xs text-slate-300 sm:ml-auto">{filtered.length} total results</span>
         )}
       </div>
 
