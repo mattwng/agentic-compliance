@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -101,8 +101,14 @@ function SourcePill({ source, status }: { source: string; status: SourceStatus }
 
 // ── Threat Card ────────────────────────────────────────────────────────────────
 
+const DESC_CLAMP_THRESHOLD = 180 // chars before "Read more" link appears
+
 function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: boolean }) {
+  const [descExpanded, setDescExpanded] = useState(false)
   const sev = SEV_CONFIG[threat.severity] ?? SEV_CONFIG.info
+  const displayDesc = threat.description?.trim() || threat.vulnerability_summary?.trim() || ''
+  const isLong = displayDesc.length > DESC_CLAMP_THRESHOLD
+
   return (
     <Card className={`bg-slate-900 border-slate-800 hover:border-slate-700 transition-colors ${relevant ? 'ring-1 ring-amber-700/50' : ''}`}>
       <CardContent className="p-4 space-y-2">
@@ -115,7 +121,7 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
               rel="noopener noreferrer"
               className="text-sm font-medium text-slate-100 hover:text-indigo-300 leading-snug line-clamp-2 transition-colors"
             >
-              {threat.title}
+              {threat.title || threat.id}
             </a>
           </div>
           <a href={threat.link} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 mt-0.5">
@@ -135,10 +141,20 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
           <span className="text-xs text-slate-600" title={formatDate(threat.published)}>{formatAge(threat.published)}</span>
         </div>
 
-        {(threat.description?.trim() || threat.vulnerability_summary?.trim()) && (
-          <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-            {threat.description?.trim() || threat.vulnerability_summary}
-          </p>
+        {displayDesc && (
+          <div>
+            <p className={`text-xs text-slate-400 leading-relaxed ${!descExpanded && isLong ? 'line-clamp-2' : ''}`}>
+              {displayDesc}
+            </p>
+            {isLong && (
+              <button
+                onClick={() => setDescExpanded(v => !v)}
+                className="text-xs text-indigo-400 hover:text-indigo-300 mt-0.5 transition-colors"
+              >
+                {descExpanded ? 'Show less' : 'Read more →'}
+              </button>
+            )}
+          </div>
         )}
 
         {threat.tags.length > 0 && (
@@ -170,6 +186,7 @@ function ThreatSection({
   localSevFilter,
   onLocalSevChange,
   totalBeforeLocalFilter,
+  defaultLimit,
 }: {
   title: string
   description: string
@@ -183,9 +200,17 @@ function ThreatSection({
   localSevFilter?: string
   onLocalSevChange?: (s: string) => void
   totalBeforeLocalFilter?: number
+  defaultLimit?: number
 }) {
+  const [showAll, setShowAll] = useState(false)
+
+  // Collapse back to default when the underlying threat list changes (filter applied)
+  useEffect(() => { if (defaultLimit) setShowAll(false) }, [threats.length, defaultLimit])
+
   const sectionStatus = Object.entries(sourcesStatus).filter(([src]) => sectionSources.has(src))
   const anyFetching = generating && sectionStatus.some(([, s]) => s.type === 'live' && !s.ok)
+  const displayThreats = defaultLimit && !showAll ? threats.slice(0, defaultLimit) : threats
+  const hiddenCount = defaultLimit ? Math.max(0, threats.length - defaultLimit) : 0
 
   return (
     <div className="space-y-4">
@@ -196,7 +221,7 @@ function ThreatSection({
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
             <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
-              {threats.length}{totalBeforeLocalFilter !== undefined && localSevFilter !== 'all' ? ` of ${totalBeforeLocalFilter}` : ''} {threats.length === 1 ? 'result' : 'results'}
+              {defaultLimit && !showAll && hiddenCount > 0 ? `${defaultLimit} of ` : ''}{threats.length}{totalBeforeLocalFilter !== undefined && localSevFilter !== 'all' ? ` of ${totalBeforeLocalFilter}` : ''} {threats.length === 1 ? 'result' : 'results'}
             </span>
             {anyFetching && (
               <span className="text-xs text-indigo-400 flex items-center gap-1">
@@ -246,8 +271,29 @@ function ThreatSection({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {threats.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevant(t)} />)}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {displayThreats.map(t => <ThreatCard key={t.id} threat={t} relevant={isRelevant(t)} />)}
+          </div>
+          {defaultLimit && (
+            <div className="flex justify-center">
+              {!showAll && hiddenCount > 0 ? (
+                <button
+                  onClick={() => setShowAll(true)}
+                  className="px-4 py-2 rounded-md text-sm text-slate-400 border border-slate-700 hover:border-slate-500 hover:text-slate-300 bg-slate-900 transition-colors"
+                >
+                  Show {hiddenCount} more →
+                </button>
+              ) : showAll && (
+                <button
+                  onClick={() => setShowAll(false)}
+                  className="px-4 py-2 rounded-md text-sm text-slate-500 border border-slate-800 hover:border-slate-700 bg-slate-900 transition-colors"
+                >
+                  Show less ↑
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -310,7 +356,11 @@ export default function ThreatsPage() {
   // Per-section filtered subsets
   const threatIntelAll       = useMemo(() => filtered.filter(t => THREAT_INTEL_SOURCES.has(t.source)), [filtered])
   const threatIntelThreats   = useMemo(() => threatIntelAll.filter(t => threatIntelSev === 'all' || t.severity === threatIntelSev), [threatIntelAll, threatIntelSev])
-  const newsThreats          = useMemo(() => filtered.filter(t => NEWS_SOURCES.has(t.source)), [filtered])
+  const newsThreats          = useMemo(() =>
+    filtered
+      .filter(t => NEWS_SOURCES.has(t.source))
+      .sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime()),
+    [filtered])
   const supplyChainThreats   = useMemo(() => filtered.filter(t => SUPPLY_CHAIN_SOURCES.has(t.source)), [filtered])
 
   const sevCounts = useMemo(() => {
@@ -500,6 +550,7 @@ export default function ThreatsPage() {
             sectionSources={NEWS_SOURCES}
             isRelevant={isRelevantToGaps}
             generating={generating}
+            defaultLimit={3}
           />
 
           {/* ── Section 2: Supply Chain & Package Security ────────────────── */}
