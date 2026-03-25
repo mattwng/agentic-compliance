@@ -49,7 +49,7 @@ export default function Navbar() {
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 pathname === l.href
                   ? 'bg-indigo-600 text-white'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                  : 'text-slate-200 hover:text-white hover:bg-slate-800'
               }`}
             >
               {l.label}
@@ -74,7 +74,7 @@ export default function Navbar() {
               href={l.href}
               onClick={() => setOpen(false)}
               className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${
-                pathname === l.href ? 'bg-indigo-600 text-white' : 'text-slate-400'
+                pathname === l.href ? 'bg-indigo-600 text-white' : 'text-slate-200'
               }`}
             >
               {l.label}
