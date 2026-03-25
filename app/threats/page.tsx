@@ -341,7 +341,7 @@ function ThreatSection({
               source={source}
               threats={sourceThreats}
               isRelevant={isRelevant}
-              defaultCount={1}
+              defaultCount={3}
             />
           ))}
         </div>
