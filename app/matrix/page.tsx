@@ -26,7 +26,7 @@ export default function MatrixPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Evidence Matrix</h1>
-          <p className="text-slate-400 mt-1">48 evidence items × 10 frameworks × 8 domains</p>
+          <p className="text-slate-200 mt-1">48 evidence items × 10 frameworks × 8 domains</p>
         </div>
         <Button onClick={exportCSV} variant="outline" className="border-slate-700">
           <Download className="h-4 w-4 mr-2" /> Export CSV
@@ -49,7 +49,7 @@ export default function MatrixPage() {
         ))}
         <button
           onClick={() => { setActiveDomain(null); setActiveFramework(null) }}
-          className="px-3 py-1 rounded-full text-xs border border-slate-600 text-slate-400 hover:bg-slate-800"
+          className="px-3 py-1 rounded-full text-xs border border-slate-500 text-slate-200 hover:bg-slate-800"
         >
           Clear
         </button>
@@ -72,12 +72,12 @@ export default function MatrixPage() {
       </div>
 
       {/* Matrix table */}
-      <p className="text-xs text-slate-500 sm:hidden">← Scroll horizontally to see all domains</p>
+      <p className="text-xs text-slate-300 sm:hidden">← Scroll horizontally to see all domains</p>
       <div className="overflow-auto rounded-lg border border-slate-800">
         <table className="text-xs min-w-[1200px]">
           <thead>
             <tr className="bg-slate-900">
-              <th className="sticky left-0 z-10 bg-slate-900 text-left px-4 py-3 text-slate-400 font-medium border-b border-r border-slate-800 min-w-[160px]">Framework</th>
+              <th className="sticky left-0 z-10 bg-slate-900 text-left px-4 py-3 text-slate-200 font-medium border-b border-r border-slate-800 min-w-[160px]">Framework</th>
               {DOMAINS.map(d => (
                 <th
                   key={d}
@@ -114,13 +114,13 @@ export default function MatrixPage() {
                           <ul className="space-y-1">
                             {items.map(item => (
                               <li key={item.id} className="flex items-start gap-1">
-                                <span className="mt-0.5 text-slate-600">•</span>
+                                <span className="mt-0.5 text-slate-400">•</span>
                                 <span className="text-slate-300 leading-snug">{item.aspect}</span>
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <span className="text-slate-700">—</span>
+                          <span className="text-slate-500">—</span>
                         )}
                       </td>
                     )

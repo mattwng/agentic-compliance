@@ -264,11 +264,11 @@ function TrackerContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{assessmentId ? 'Edit Assessment' : 'New Assessment'}</h1>
-          <p className="text-slate-400 mt-1">Rate {EVIDENCE.length} evidence items across 10 frameworks</p>
+          <p className="text-slate-200 mt-1">Rate {EVIDENCE.length} evidence items across 10 frameworks</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
-          <Button onClick={handleDownloadTemplate} variant="outline" className="border-slate-700 text-slate-400 text-sm" title="Download JSON schema template for your discovery tool">
+          <Button onClick={handleDownloadTemplate} variant="outline" className="border-slate-700 text-slate-200 text-sm" title="Download JSON schema template for your discovery tool">
             <Download className="h-4 w-4 mr-2" /> Template
           </Button>
           <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-indigo-700 text-indigo-400 hover:bg-indigo-900/20 text-sm">
@@ -304,17 +304,17 @@ function TrackerContent() {
       <Card className="bg-slate-900 border-slate-800">
         <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-slate-400 mb-1 block">Assessment Name</label>
+            <label className="text-sm text-slate-200 mb-1 block">Assessment Name</label>
             <Input value={assessmentName} onChange={e => { setAssessmentName(e.target.value); saveDraft(responses, e.target.value, systemName, notes) }}
               placeholder="e.g. Q1 2026 Review" className="bg-slate-800 border-slate-700" />
           </div>
           <div>
-            <label className="text-sm text-slate-400 mb-1 block">System Name</label>
+            <label className="text-sm text-slate-200 mb-1 block">System Name</label>
             <Input value={systemName} onChange={e => { setSystemName(e.target.value); saveDraft(responses, assessmentName, e.target.value, notes) }}
               placeholder="e.g. AISPM Platform" className="bg-slate-800 border-slate-700" />
           </div>
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-400 mb-1 block">Notes</label>
+            <label className="text-sm text-slate-200 mb-1 block">Notes</label>
             <Textarea value={notes} onChange={e => { setNotes(e.target.value); saveDraft(responses, assessmentName, systemName, e.target.value) }}
               placeholder="Assessment context, scope, assumptions..." className="bg-slate-800 border-slate-700 resize-none" rows={2} />
           </div>
@@ -323,7 +323,7 @@ function TrackerContent() {
 
       {/* Progress */}
       <div className="space-y-1">
-        <div className="flex justify-between text-sm text-slate-400">
+        <div className="flex justify-between text-sm text-slate-200">
           <span>Progress</span><span>{ratedCount} / {EVIDENCE.length} items rated ({progressPct}%)</span>
         </div>
         <Progress value={progressPct} className="h-2" />
@@ -333,28 +333,28 @@ function TrackerContent() {
       <div className="rounded-lg border border-slate-800 bg-slate-900/60">
         <button
           onClick={() => setShowPhaseInfo(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm text-slate-400 hover:text-slate-200"
+          className="w-full flex items-center justify-between px-4 py-3 text-sm text-slate-200 hover:text-white"
         >
           <span className="flex items-center gap-2">
             <Info className="h-4 w-4 text-indigo-400" />
             <span className="font-medium text-slate-300">Discovery Phases</span>
-            <span className="text-slate-500">— automated workflow covers 40 of 48 controls; 8 require manual input</span>
+            <span className="text-slate-300">— automated workflow covers 40 of 48 controls; 8 require manual input</span>
           </span>
-          <span className="text-slate-600">{showPhaseInfo ? '▲' : '▼'}</span>
+          <span className="text-slate-400">{showPhaseInfo ? '▲' : '▼'}</span>
         </button>
         {showPhaseInfo && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-slate-800 divide-y md:divide-y-0 md:divide-x divide-slate-800">
             <div className="px-4 py-3">
               <p className="text-xs font-semibold text-violet-400 mb-1">Phase 1 — AI Topology Scan</p>
-              <p className="text-xs text-slate-400">Graph traversal maps agent nodes, tool edges, and runtime trust boundaries. Covers <span className="text-violet-300 font-medium">{sourceCounts.topology} controls</span> with auto or signal confidence.</p>
+              <p className="text-xs text-slate-300">Graph traversal maps agent nodes, tool edges, and runtime trust boundaries. Covers <span className="text-violet-300 font-medium">{sourceCounts.topology} controls</span> with auto or signal confidence.</p>
             </div>
             <div className="px-4 py-3">
               <p className="text-xs font-semibold text-teal-400 mb-1">Phase 2 — Cloud Infrastructure API Scan</p>
-              <p className="text-xs text-slate-400">Cloud provider APIs enumerate IAM roles, secrets, network policies, and logging config. Covers <span className="text-teal-300 font-medium">{sourceCounts['cloud-api']} controls</span> with auto or signal confidence.</p>
+              <p className="text-xs text-slate-300">Cloud provider APIs enumerate IAM roles, secrets, network policies, and logging config. Covers <span className="text-teal-300 font-medium">{sourceCounts['cloud-api']} controls</span> with auto or signal confidence.</p>
             </div>
             <div className="px-4 py-3">
               <p className="text-xs font-semibold text-amber-400 mb-1">Manual Input — Optional Enrichment</p>
-              <p className="text-xs text-slate-400"><span className="text-amber-300 font-medium">{sourceCounts.manual} controls</span> require human-authored documentation (governance docs, red-team results, conformity assessments). Not required to score — add separately for a full audit.</p>
+              <p className="text-xs text-slate-300"><span className="text-amber-300 font-medium">{sourceCounts.manual} controls</span> require human-authored documentation (governance docs, red-team results, conformity assessments). Not required to score — add separately for a full audit.</p>
             </div>
           </div>
         )}
@@ -374,7 +374,7 @@ function TrackerContent() {
             className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
               filterSource === key
                 ? 'bg-indigo-600 text-white'
-                : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-slate-300'
+                : 'bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-500 hover:text-white'
             }`}
           >
             {label}
@@ -405,12 +405,12 @@ function TrackerContent() {
 
       {/* Evidence table */}
       <Card className="bg-slate-900 border-slate-800">
-        <CardHeader><CardTitle className="text-sm text-slate-400">{filteredEvidence.length} items shown</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm text-slate-200">{filteredEvidence.length} items shown</CardTitle></CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400">
+                <tr className="border-b border-slate-800 text-slate-200">
                   <th className="text-left py-3 px-4 min-w-[160px]">Domain</th>
                   <th className="text-left py-3 px-4 w-16">Weight</th>
                   <th className="text-left py-3 px-4 min-w-[180px]">Frameworks</th>
@@ -427,7 +427,7 @@ function TrackerContent() {
                         {item.domain}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-slate-400 text-xs">
+                    <td className="py-3 px-4 text-slate-200 text-xs">
                       {weightMap[item.domain] ? `${Math.round(weightMap[item.domain] * 100)}%` : '—'}
                     </td>
                     <td className="py-3 px-4">

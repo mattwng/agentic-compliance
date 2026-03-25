@@ -136,9 +136,9 @@ function ThreatCard({ threat, relevant }: { threat: ThreatEntry; relevant?: bool
               <ShieldAlert className="h-3 w-3" /> Relevant to gaps
             </Badge>
           )}
-          <span className="text-xs text-slate-500 font-medium">{threat.source}</span>
-          <span className="text-xs text-slate-600">·</span>
-          <span className="text-xs text-slate-600" title={formatDate(threat.published)}>{formatAge(threat.published)}</span>
+          <span className="text-xs text-slate-300 font-medium">{threat.source}</span>
+          <span className="text-xs text-slate-400">·</span>
+          <span className="text-xs text-slate-400" title={formatDate(threat.published)}>{formatAge(threat.published)}</span>
         </div>
 
         {displayDesc && (
@@ -282,7 +282,7 @@ function ThreatSection({
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+          <p className="text-xs text-slate-300 mt-0.5">{description}</p>
         </div>
         {/* Per-section severity selector (Threat Intel only) */}
         {onLocalSevChange && (
@@ -478,7 +478,7 @@ export default function ThreatsPage() {
               <RefreshCw className="h-3 w-3 animate-spin" /> Updating live feeds…
             </span>
           ) : data?.timestamp ? (
-            <span className="text-xs text-slate-500 flex items-center gap-1.5">
+            <span className="text-xs text-slate-300 flex items-center gap-1.5">
               Synced {formatTimestamp(data.timestamp)} · auto-refreshing
             </span>
           ) : null}
@@ -537,7 +537,7 @@ export default function ThreatsPage() {
           <Button
             onClick={() => { setSourceFilter(''); setSearch(''); setRelevantOnly(false) }}
             variant="outline"
-            className="border-slate-700 text-slate-400 text-sm"
+            className="border-slate-700 text-slate-200 text-sm"
           >
             Clear filters
           </Button>
@@ -553,8 +553,8 @@ export default function ThreatsPage() {
           <ShieldAlert className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
             <span className="text-amber-300 font-medium">Assessment gap context active — </span>
-            <span className="text-amber-500">{relevantCount} threat{relevantCount !== 1 ? 's' : ''} mapped to {gappedDomains.size} domain{gappedDomains.size !== 1 ? 's' : ''} with Non-Compliant or Partial controls: </span>
-            <span className="text-amber-600 text-xs">{[...gappedDomains].join(' · ')}</span>
+            <span className="text-amber-400">{relevantCount} threat{relevantCount !== 1 ? 's' : ''} mapped to {gappedDomains.size} domain{gappedDomains.size !== 1 ? 's' : ''} with Non-Compliant or Partial controls: </span>
+            <span className="text-amber-300 text-xs">{[...gappedDomains].join(' · ')}</span>
           </div>
         </div>
       )}

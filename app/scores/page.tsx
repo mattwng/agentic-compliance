@@ -112,7 +112,7 @@ function ScoresContent() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Risk Scores</h1>
-          <p className="text-slate-400 mt-1">Compliance scores by framework and domain</p>
+          <p className="text-slate-200 mt-1">Compliance scores by framework and domain</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setShowTrend(!showTrend)} variant="outline" className="border-slate-700">
@@ -127,7 +127,7 @@ function ScoresContent() {
       {/* Assessment selector */}
       {assessments && assessments.length > 0 && (
         <div>
-          <label className="text-sm text-slate-400 mb-1 block">Assessment</label>
+          <label className="text-sm text-slate-200 mb-1 block">Assessment</label>
           <select
             value={selectedId ?? ''}
             onChange={e => router.push(`/scores?id=${e.target.value}`)}
@@ -149,7 +149,7 @@ function ScoresContent() {
               <div className="text-5xl sm:text-6xl font-black shrink-0" style={{ color: rag?.dot }}>{selected.overallScore}%</div>
               <div>
                 <div className="text-xl font-bold text-slate-100">{rag?.label}</div>
-                <div className="text-slate-400 text-sm">{selected.systemName} — {selected.name}</div>
+                <div className="text-slate-200 text-sm">{selected.systemName} — {selected.name}</div>
                 <Badge className={`${rag?.bg} ${rag?.text} border-0 mt-1`}>
                   {selected.overallScore >= 75 ? 'Low' : selected.overallScore >= 50 ? 'Medium' : 'High'} Risk — Overall Compliance Score
                 </Badge>
@@ -185,7 +185,7 @@ function ScoresContent() {
       ) : (
         <Card className="bg-slate-900 border-slate-800">
           <CardContent className="flex flex-col items-center py-16 gap-4">
-            <p className="text-slate-400">No assessments found.</p>
+            <p className="text-slate-200">No assessments found.</p>
             <Button onClick={() => router.push('/tracker')} className="bg-indigo-600 hover:bg-indigo-700">Start an Assessment</Button>
           </CardContent>
         </Card>
@@ -228,7 +228,7 @@ function ScoresContent() {
               <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
             </div>
           </div>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-300 text-sm mt-1">
             Import a CSV from threats.illuminait.io to auto-calibrate weights from live threat data.
             Severity scoring: Critical=4, High=3, Medium=2, Low=1, Info=0.5
           </p>
@@ -244,7 +244,7 @@ function ScoresContent() {
                 const displayWeight = previewWeight ?? currentWeight?.weight ?? 0
                 return (
                   <div key={domain} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                    <div className="text-sm shrink-0 sm:w-60" style={{ color: '#94a3b8' }}>{domain}</div>
+                    <div className="text-sm shrink-0 sm:w-60 text-slate-200">{domain}</div>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
                         <div className="h-2 rounded-full bg-indigo-500 transition-all" style={{ width: `${displayWeight * 100}%` }} />
@@ -256,7 +256,7 @@ function ScoresContent() {
                           <span>{Math.round(displayWeight * 100)}%</span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-600 w-16 shrink-0">{importPreview ? 'from CSV' : currentWeight?.source ?? ''}</div>
+                      <div className="text-xs text-slate-300 w-16 shrink-0">{importPreview ? 'from CSV' : currentWeight?.source ?? ''}</div>
                     </div>
                   </div>
                 )
@@ -267,7 +267,7 @@ function ScoresContent() {
             <div className="mt-6 p-4 rounded-lg border border-amber-800 bg-amber-900/20 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
               <div>
                 <p className="text-amber-400 font-medium text-sm">Preview — weights recalculated from threat CSV</p>
-                <p className="text-slate-500 text-xs mt-0.5">Amber values indicate changed weights</p>
+                <p className="text-slate-300 text-xs mt-0.5">Amber values indicate changed weights</p>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button onClick={() => { setImportPreview(null); if (fileRef.current) fileRef.current.value = '' }} variant="outline" className="border-slate-700 text-sm">Cancel</Button>
