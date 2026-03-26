@@ -376,6 +376,101 @@ function ThreatSection({
   )
 }
 
+// ── Severity Legend ────────────────────────────────────────────────────────────
+
+const SEV_DEFINITIONS: Record<ThreatSeverity, { summary: string; criteria: string[] }> = {
+  critical: {
+    summary: 'Actively weaponized or catastrophically impactful — immediate attention required.',
+    criteria: [
+      'Known ransomware campaign actively exploiting the vulnerability (CISA KEV)',
+      'CVSS v3: 2+ high-impact components (C/I/A rated High) AND network-exploitable (AV:N)',
+      'GitHub issue label explicitly marked critical',
+    ],
+  },
+  high: {
+    summary: 'Significant, realistic threat with confirmed exploitation potential or serious impact.',
+    criteria: [
+      'AI-related known-exploited vulnerability in CISA KEV (no ransomware linkage)',
+      'CVSS v3: at least one high-impact component, or OSV database severity rated HIGH',
+      'Editorially rated by authoritative annual reports (ENISA, IBM X-Force, Verizon DBIR, Mandiant)',
+      'Default severity for AI/ML OSS repo security issues without a severity label override',
+    ],
+  },
+  medium: {
+    summary: 'Notable threat requiring attention, but with limited confirmed real-world impact or narrower scope.',
+    criteria: [
+      'OSV/CVSS: database severity is MODERATE or MEDIUM, or fewer than 2 high-impact CVSS components',
+      'Default fallback when no severity data is available from the source',
+      'MITRE ATLAS adversarial ML techniques (all default to medium)',
+      'AI-related news articles (The Hacker News, Snyk) and PyPA package advisories',
+    ],
+  },
+  low: {
+    summary: 'Known but limited-impact or theoretical threat with little active exploitation evidence.',
+    criteria: [
+      'OSV/CVSS database severity explicitly rated LOW',
+      'GitHub issue label explicitly marked low',
+    ],
+  },
+  info: {
+    summary: 'Awareness-level context — not a direct threat, but relevant to understanding the AI risk landscape.',
+    criteria: [
+      'Informational entries with no exploitability signal',
+      'Carries a weight of 0.5 in domain risk scoring (vs. 1–4 for actionable severities)',
+    ],
+  },
+}
+
+function SeverityLegend() {
+  const [open, setOpen] = useState<ThreatSeverity | null>(null)
+
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-900/50 overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-800">
+        <Shield className="h-3.5 w-3.5 text-slate-500" />
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Severity Definitions</span>
+      </div>
+      <div className="flex flex-wrap divide-x divide-slate-800">
+        {SEV_ORDER.map(sev => {
+          const cfg = SEV_CONFIG[sev]
+          const def = SEV_DEFINITIONS[sev]
+          const isOpen = open === sev
+          return (
+            <button
+              key={sev}
+              onClick={() => setOpen(isOpen ? null : sev)}
+              className={`flex-1 min-w-[120px] flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
+                isOpen ? 'bg-slate-800/70' : 'hover:bg-slate-800/40'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.dot }} />
+              <span className={`text-xs font-semibold ${isOpen ? 'text-slate-100' : 'text-slate-400'}`}>{cfg.label}</span>
+              <span className={`ml-auto text-slate-600 text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+            </button>
+          )
+        })}
+      </div>
+      {open && (
+        <div className="px-5 py-4 border-t border-slate-800 bg-slate-900/80">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: SEV_CONFIG[open].dot }} />
+            <span className="text-sm font-semibold text-slate-100">{SEV_CONFIG[open].label}</span>
+          </div>
+          <p className="text-sm text-slate-300 mb-3">{SEV_DEFINITIONS[open].summary}</p>
+          <ul className="space-y-1.5">
+            {SEV_DEFINITIONS[open].criteria.map((c, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                <span className="mt-1 w-1 h-1 rounded-full bg-slate-600 flex-shrink-0" />
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function ThreatsPage() {
@@ -494,6 +589,9 @@ export default function ThreatsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Severity legend */}
+      <SeverityLegend />
 
       {/* Filter row */}
       <div className="flex flex-wrap gap-3 items-center">
